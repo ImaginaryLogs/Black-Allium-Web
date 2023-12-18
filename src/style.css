@@ -15,6 +15,7 @@
     */
 
     --primary: #C375FA;
+    --primaryShade: #38003c;
     --secondary: #61db82;
     --accent: #009a45;
     
@@ -31,13 +32,12 @@ button {
     color: var(--text);
     border-radius: 2px; 
     font-size: 30px;
-    transition: opacity 10s;
+    transition: background-color 1s;
 }
 
 button:hover{
     background-color: var(--secondary);
     cursor: pointer;
-    transition: opacity 10s;
 }
 
 button:active{
@@ -51,11 +51,6 @@ h1 {
     margin-left: 16px;
 }
 
-p {
-    margin: 32px;
-    text-align: justify;
-}
-
 body {
     font-family: 'Poppins';
     background-color: var(--bg);
@@ -65,21 +60,31 @@ body {
     margin: 0;
 }
 
-html {
+html{
     height: 100%;
-    margin: 0;
 }
 
-/* Classes */
-
-.navigation {
-    margin: 0;
+.content {
+    padding: 16px;
+    /*background-image: radial-gradient(circle, var(--primaryShade), var(--bg));*/
 }
 
-.navigation ul {
+.sticky {
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+.sticky + .content {
+    padding-top: 60px;
+}
+
+#navbar{
+    margin: 0;
+    z-index: 1;
+}
+#navbar ul {
     list-style-type: none;
-    position: -webkit-sticky; /* Safari */
-    position: sticky;
     top: 0;
     width: 100%;
     margin: 0;
@@ -87,58 +92,27 @@ html {
     overflow: hidden;
     background-color: #333;
 }
-.navigation li {
+#navbar li {
     float: left;
 }
-.navigation a{
+#navbar a{
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
     display: block;
     color:var(--text);
+    transition: background-color 1s;
 }
-
-.navigation a:hover {
+#navbar a:hover {
     background: #111;
 }
 
-.navigation .active {
+#navbar .active {
     background-color: var(--primary);
 }
 
-/* The hero image */
-.hero-image {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("images/stars.png");
-    height: 50%;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    position: relative;
-}
-
-
-/* Place text in the middle of the image */
-.hero-text {
-    text-align: center;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-}
-
-.hero-link {
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-    display: block;
-    color:var(--text);
-    background-color: linear-gradient(rgba(127, 17, 224, 0.5), rgba(127, 17, 224, 0.5));
-}
-
-.hero-button {
-    text-align: center;
-    border: 1px solid;
+#navbar a:hover.active {
+    background-color: var(--primaryShade);
 }
 
 .control {
@@ -147,8 +121,52 @@ html {
     margin-right: 50%;
     padding: 10px;
 }
-
 .control li {
     list-style-type: none;    
 }
+
+#divider{
+    background-color: var(--primary);
+    padding-left: 100%;
+    padding-right: 0;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--bg);
+}
+
+.content p{
+    margin: 32px;
+    text-align: justify;
+}
+
+.hero-image {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("images/stars.png");
+    height: 100%;
+    margin: 0px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+}
+.hero-text {
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+}
+.hero-link {
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    display: block;
+    color:var(--text);
+    background-color: linear-gradient(rgba(127, 17, 224, 0.5), rgba(127, 17, 224, 0.5));
+}
+.hero-button {
+    text-align: center;
+    border: 1px solid;
+}
+
 
