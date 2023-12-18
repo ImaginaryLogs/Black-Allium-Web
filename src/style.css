@@ -1,0 +1,154 @@
+:root {
+    /*
+    Use OKLAB colors to find web colors with a balanced look.
+    https://observablehq.com/@shan/oklab-color-wheel
+    */ 
+    --bg:#080808;
+    --text:white;
+    /*
+    --primary: #155630;
+    --secondary: #d8e4dd;
+    --accent: #c20003;
+    */
+    /*--secondary: #d50000;
+    --accent: #970034;
+    */
+
+    --primary: #C375FA;
+    --secondary: #61db82;
+    --accent: #009a45;
+    
+}
+
+/*
+Regular elements
+*/
+
+button {
+    background-color: var(--accent);
+    border: none;
+    padding: 16px;
+    color: var(--text);
+    border-radius: 2px; 
+    font-size: 30px;
+    transition: opacity 10s;
+}
+
+button:hover{
+    background-color: var(--secondary);
+    cursor: pointer;
+    transition: opacity 10s;
+}
+
+button:active{
+    background-color: var(--accent);
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+h1 {
+    color: var(--primary);
+    margin-left: 16px;
+}
+
+p {
+    margin: 32px;
+    text-align: justify;
+}
+
+body {
+    font-family: 'Poppins';
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    height: 100%;
+    margin: 0;
+}
+
+html {
+    height: 100%;
+    margin: 0;
+}
+
+/* Classes */
+
+.navigation {
+    margin: 0;
+}
+
+.navigation ul {
+    list-style-type: none;
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+.navigation li {
+    float: left;
+}
+.navigation a{
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    display: block;
+    color:var(--text);
+}
+
+.navigation a:hover {
+    background: #111;
+}
+
+.navigation .active {
+    background-color: var(--primary);
+}
+
+/* The hero image */
+.hero-image {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("images/stars.png");
+    height: 50%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+}
+
+
+/* Place text in the middle of the image */
+.hero-text {
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+}
+
+.hero-link {
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    display: block;
+    color:var(--text);
+    background-color: linear-gradient(rgba(127, 17, 224, 0.5), rgba(127, 17, 224, 0.5));
+}
+
+.hero-button {
+    text-align: center;
+    border: 1px solid;
+}
+
+.control {
+    border: 1px solid;
+    margin: 2%;
+    margin-right: 50%;
+    padding: 10px;
+}
+
+.control li {
+    list-style-type: none;    
+}
+
