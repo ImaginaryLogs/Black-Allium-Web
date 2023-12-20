@@ -19,6 +19,10 @@ function buttonClick() {
     console.log("Click!");
 }
 
+function themeChange(){
+    
+}
+
 for (let i = 0; i <buttons.length; i++)
 {
     let button = buttons[i];
