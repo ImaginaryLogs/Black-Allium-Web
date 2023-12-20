@@ -69,7 +69,7 @@ html{
     padding-top: 60px;
 }
 
-#navbar{
+#navbar {
     margin: 0;
     z-index: 1;
 }
@@ -112,7 +112,8 @@ html{
     padding: 10px;
 }
 .control li {
-    list-style-type: none;    
+    list-style-type: none;
+    margin: 5px;    
 }
 
 #divider{
@@ -138,6 +139,7 @@ html{
     background-size: cover;
     position: relative;
 }
+
 .hero-text {
     text-align: center;
     position: absolute;
@@ -146,17 +148,24 @@ html{
     transform: translate(-50%, -50%);
     color: white;
 }
+
 .hero-link {
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
     display: block;
     color:var(--text);
-    background-color: linear-gradient(rgba(127, 17, 224, 0.5), rgba(127, 17, 224, 0.5));
+    background-color: var(--accent);
+    transition:  1s;
+    border-radius: 16px;
 }
-.hero-button {
-    text-align: center;
-    border: 1px solid;
+
+.hero-link:hover{
+    background: var(--secondary);
+}
+
+.hero-text h1 {
+    font-size: 50px;
 }
 
 
