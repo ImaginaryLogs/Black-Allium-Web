@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackhawk</title>
     <link rel = "icon" type= "image/x-icon" href="../images/canary.png">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/styles.css">
     <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
     <script type="module" src="../js/webHandler.js"></script>
 </head>
@@ -20,14 +20,21 @@
     </div>
     
     <div class="content">
-        <div class="control">
-            <h1>Controls:</h1>
-            <ul>
-                <li><button class="pressable" id="bTheme"> Theme </button></li>
-                <li><button class="pressable" id="bList"> List </button></li>
-            </ul>
+        <div id="app">
+            <div id="control-panel">
+                <h1>Controls:</h1>
+                <ul>
+                    <li><button class="pressable" id="bTheme"> Theme </button></li>
+                    <li><button class="pressable" id="bList"> List </button></li>
+                    <li><label><button class="pressable" id="bPath"> Path </button><input type="text"></input></label></li>
+                </ul>
+            </div>
+            <div id="screen">
+                <p id ="List"></p>
+            </div>
         </div>
     </div>
+    
     <footer>
         <a href="https://www.flaticon.com/free-icons/canary" title="Canary icons">Canary icons created by Freepik - Flaticon</a>
     </footer>

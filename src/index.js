@@ -25,33 +25,16 @@ function fileSearch(parentFolder, target){
   })
 }
 
-// const server = http.createServer((req, res) => {
-//   let parsedURL = url.parse(req.url, true);
-//   console.log("parsedURL:", parsedURL);
-//   let path = parsedURL.path.replace(/^\/+|\/+$/g, "");
-//   if (path == "") {
-//     path = "public/pages/index.html";
-//   }
-//   console.log('Requested path:', path);
+function logger(path, isResolved, err)
+{
+  console.log("\u001b[1;33m"+"GET-PUB:", '\u001b[0;15m'+ path + '\u001b[0;15m');
+  if(isResolved){
+    console.log('\u001b[0;32m'+' \\->RES:', '\u001b[0;15m' + path);
+  } else {
+    console.error(err);
+  }
+}
 
-//   //fileSearch(PUBLIC_PATH, path);
-
-//   let file = pathLocal.join(pathLocal.dirname(ps.cwd()), path); //search system should be implemented.
-
-//     fs.readFile(file, function(err, content) {
-//       if (err) {
-//         console.log('File Not Found', err);
-//         res.writeHead(404);
-//         res.end();
-//       } else {
-//         console.log('Returning', path);
-//         res.setHeader("X-Content-Type-Options", "nosniff");
-//         let mime = mimetype.lookup(path);
-//         res.writeHead(200, {"Content-type": mime});
-//         res.end(content);
-//       }
-//     });
-// });
 
 const server = express();
 
@@ -65,30 +48,29 @@ server.use('/app', app);
 //
 server.use('/app', (req, res) => {
   let parsedURL = url.parse(req.url, true);
-  console.log("GET-PUB,", parsedURL.path);
+  //console.log("GET-PUB,", parsedURL.path);
   server.use(app);
-  console.log("Res: Not in domain");
+  //console.log("Res: Not in domain");
   res.end();
 });
 
 
-server.use('/public/', (req, res) => {
+server.use('/', (req, res) => {
   let parsedURL = url.parse(req.url, true);
   // console.log("parsedURL:", parsedURL);
   let path = parsedURL.path.replace(/^\/+|\/+$/g, "");
   if (path == "") {
-    path = "./public/pages/index.html";
+    path = "./pages/index.html";
   }
-  console.log('GET-PUB,', path);
 
   let file = pathLocal.join(pathLocal.join(pathLocal.dirname(ps.cwd()), '/public/'), path); //search system should be implemented.
     fs.readFile(file, function(err, content) {
       if (err) {
-        console.log('Err: File Not Found', err);
+        logger(path, false, err);
         res.writeHead(404);
         res.end();
       } else {
-        console.log('Res:', path);
+        logger(path, true, "");
         res.setHeader("X-Content-Type-Options", "nosniff");
         let mime = mimetype.lookup(path);
         res.writeHead(200, {"Content-type": mime});
@@ -96,6 +78,9 @@ server.use('/public/', (req, res) => {
       }
     })}
 )
+
+
+
 
 
 
