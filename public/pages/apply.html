@@ -26,11 +26,39 @@
                 <ul>
                     <li><button class="pressable" id="bTheme"> Theme </button></li>
                     <li><button class="pressable" id="bList"> List </button></li>
-                    <li><label><button class="pressable" id="bPath"> Path </button><input type="text"></input></label></li>
+                    <li>
+                        <label>
+                            <button class="pressable" id="bPath"> Path </button>
+                            <input type="text" id="bPathText"></input placeholder="Input markdown file address">
+                        </label>
+                    </li>
+                    <li><button class="pressable" id="bMdList"> mdList </button</li>
                 </ul>
             </div>
             <div id="screen">
-                <p id ="List"></p>
+                <div id="status">
+                    <p id="statusSign"><b>Status:</b> Idle</p>
+                    <div class="loading_bar hidden">
+                        <div class="loading_bar_animation">
+                            <div>
+                                <div>
+                                    <div></div>
+                                </div>
+                                <div>
+                                    <div></div>
+                                </div>
+                                <div>
+                                    <div></div>
+                                </div>
+                                <div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                <pre id="List">Data will display here</pre>
             </div>
         </div>
     </div>
@@ -38,5 +66,6 @@
     <footer>
         <a href="https://www.flaticon.com/free-icons/canary" title="Canary icons">Canary icons created by Freepik - Flaticon</a>
     </footer>
+    <div id="loading""></div>
 </body>
 </html>

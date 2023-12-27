@@ -10,6 +10,9 @@ https://observablehq.com/@shan/oklab-color-wheel
   --secondary: #C375FA;
   --secondaryShade: #6027b0;
   --textsize: 16px;
+  --ctrlLoadSize: 30px;
+  --pageLoadSize: 300px;
+  --offShift: 20px;
 }
 
 /*|| General*/
@@ -76,7 +79,197 @@ footer a {
   padding-top: 60px;
 }
 
+.hidden {
+  display: none !important;
+}
+.hidden > div {
+  display: none;
+}
+
+.transparent {
+  opacity: 0;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.loading_bar {
+  width: calc(var(--ctrlLoadSize) * 2);
+  height: calc(var(--ctrlLoadSize) * 2);
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  background: none;
+  padding: 0;
+  margin: 0;
+  border: none !important;
+  position: relative !important;
+}
+.loading_bar div {
+  border: none !important;
+  padding: 0 !important;
+  position: absolute !important;
+}
+
+.loading_bar_animation {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  position: relative;
+  transform: translateZ(0) scale(1);
+  backface-visibility: hidden;
+  transform-origin: 0 0;
+}
+.loading_bar_animation > div {
+  box-sizing: content-box;
+}
+.loading_bar_animation > div > div {
+  transform-origin: var(--ctrlLoadSize) var(--ctrlLoadSize);
+  animation: loading 3.0303030303s linear infinite;
+  opacity: 0.8;
+}
+.loading_bar_animation > div > div > div {
+  position: absolute;
+  left: calc(var(--ctrlLoadSize) * 0.3);
+  top: calc(var(--ctrlLoadSize) * 0.3);
+  width: calc(var(--ctrlLoadSize) * 0.7);
+  height: calc(var(--ctrlLoadSize) * 0.7);
+  border-radius: 70px 0 0 0;
+  transform-origin: var(--ctrlLoadSize) var(--ctrlLoadSize);
+}
+.loading_bar_animation > div div:nth-child(1) {
+  animation-duration: 0.7575757576s;
+}
+.loading_bar_animation > div div:nth-child(1) > div {
+  background: var(--primary);
+  transform: rotate(0deg);
+}
+.loading_bar_animation > div div:nth-child(2) {
+  animation-duration: 1.0101010101s;
+}
+.loading_bar_animation > div div:nth-child(2) > div {
+  background: var(--primaryShade);
+  transform: rotate(0deg);
+}
+.loading_bar_animation > div div:nth-child(3) {
+  animation-duration: 1.5151515152s;
+}
+.loading_bar_animation > div div:nth-child(3) > div {
+  background: var(--secondaryShade);
+  transform: rotate(0deg);
+}
+.loading_bar_animation > div div:nth-child(4) {
+  animation-duration: 3.0303030303s;
+}
+.loading_bar_animation > div div:nth-child(4) > div {
+  background: var(--secondary);
+  transform: rotate(0deg);
+}
+
+.page_loading_bar {
+  width: 100%;
+  height: calc(var(--pageLoadSize) * 2);
+  display: inline-block;
+  justify-content: center;
+  overflow: hidden;
+  background: none;
+  padding: 0;
+  margin: 0;
+  border: none !important;
+}
+
+.page_loading_bar_animation {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  position: relative;
+  transform: translateZ(0) scale(1);
+  backface-visibility: hidden;
+  transform-origin: 0 0px;
+}
+.page_loading_bar_animation > div {
+  display: flex;
+  box-sizing: content-box;
+  justify-content: center;
+}
+.page_loading_bar_animation > div > div {
+  display: flex;
+  justify-content: center;
+  transform-origin: calc(var(--pageLoadSize)) calc(var(--pageLoadSize));
+  animation: loading 3.0303030303s linear infinite;
+  opacity: 0.8;
+}
+.page_loading_bar_animation > div > div > div {
+  position: absolute;
+  left: calc(var(--pageLoadSize) * 0.3 - var(--offShift));
+  top: calc(var(--pageLoadSize) * 0.3 - var(--offShift));
+  width: calc(var(--pageLoadSize) * 0.7 + var(--offShift));
+  height: calc(var(--pageLoadSize) * 0.7 + var(--offShift));
+  border-radius: calc(var(--pageLoadSize)) 0 0 0;
+  transform-origin: 0 0;
+}
+.page_loading_bar_animation > div div:nth-child(1) {
+  animation-duration: 0.7575757576s;
+}
+.page_loading_bar_animation > div div:nth-child(1) > div {
+  background: var(--primary);
+  transform: rotate(0deg);
+}
+.page_loading_bar_animation > div div:nth-child(2) {
+  animation-duration: 1.0101010101s;
+}
+.page_loading_bar_animation > div div:nth-child(2) > div {
+  background: var(--primaryShade);
+  transform: rotate(0deg);
+}
+.page_loading_bar_animation > div div:nth-child(3) {
+  animation-duration: 1.5151515152s;
+}
+.page_loading_bar_animation > div div:nth-child(3) > div {
+  background: var(--secondaryShade);
+  transform: rotate(0deg);
+}
+.page_loading_bar_animation > div div:nth-child(4) {
+  animation-duration: 3.0303030303s;
+}
+.page_loading_bar_animation > div div:nth-child(4) > div {
+  background: var(--secondary);
+  transform: rotate(0deg);
+}
+
+@keyframes loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+#circleStatus {
+  width: calc(var(--ctrlLoadSize));
+  height: calc(var(--ctrlLoadSize));
+  background: red;
+  position: relative;
+  border: none !important;
+  border-radius: calc(var(--ctrlLoadSize));
+}
+
 /*|| Pages*/
+#loading {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: opacity 0.25s;
+}
+
 #navbar {
   margin: 0;
   z-index: 1;
@@ -117,8 +310,7 @@ footer a {
   justify-content: flex-start;
 }
 #app div {
-  border: 1px solid;
-  padding: 16px;
+  padding: var(--textsize);
   position: relative;
 }
 #app #control-panel {
@@ -132,7 +324,7 @@ footer a {
   width: 256px;
 }
 #app #control-panel li label {
-  display: flex;
+  display: flex !important;
 }
 #app #control-panel li label input {
   padding: 0px 16px;
@@ -144,9 +336,27 @@ footer a {
   background-color: rgb(29, 24, 24);
   border: var(--bg);
   color: #fdfdfd;
-  height: 100%;
+  height: 400px;
   margin-left: 2%;
   width: 100%;
+}
+#app #screen #status {
+  display: flex;
+  justify-content: space-between;
+  font-size: calc(var(--textsize));
+  text-align: left;
+}
+#app #screen #status .loading_bar {
+  display: hidden;
+}
+#app #screen #statusSign {
+  margin-bottom: 58px;
+  margin-top: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+#app #screen #statusSign b {
+  color: green;
 }
 
 #divider {
@@ -184,7 +394,7 @@ footer a {
   padding: 14px 16px;
   text-decoration: none;
   display: block;
-  color: var(--text);
+  color: white;
   background-color: var(--secondaryShade);
   transition: 1s;
   border-radius: 16px;

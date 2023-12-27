@@ -5,17 +5,23 @@ var navbar = document.getElementById("navbar");
 var navButtons = navbar.getElementsByTagName("a");
 var navbarYLocation = navbar.offsetTop;
 
-var buttons = document.getElementsByClassName("pressable");
-
 var clickSound = new Audio("../sounds/buttonClick.mp3");
-var colors = document.querySelector(':root');
+
+var buttons = document.getElementsByClassName("pressable");
+var color_var = document.querySelector(':root');
+var div_screen = document.getElementById("List");
+try{
+    var loadingBar = document.getElementById("status").getElementsByClassName("loading_bar");
+    var statusSign = document.getElementById("statusSign");
+    var statusMessage = statusSign.getElementsByTagName("b");
+    var statusCircle = document.getElementById("circleStatus")
+    var inputMarkdownAddress = document.getElementById("bPathText");
+} catch {
+
+}
 var isDarkMode = true;
 
-var screen = document.getElementById("List");
 
-/**
- * Minor Stuff Here
- */
 
 function stickyDetection() {
     if (window.scrollY >= navbarYLocation) {
@@ -26,36 +32,44 @@ function stickyDetection() {
     }
 }
 
-
-
-window.addEventListener('load', async () => {
-    const response = await fetch('/app/loadSettings');
-    const data = await response.json()
-    console.log("Loaded");
-    console.log(data);
-    colors.style.setProperty("--bg", data.web["--bg"]);
-    colors.style.setProperty("--text", data.web["--text"]);
-    colors.style.getPropertyValue("--bg");
-})
+function LoadingBarStatus(status, message) {
+    statusSign.innerHTML = '<b>Status:</b> ' + message ; 
+    switch (status){
+        case "failure":
+            loadingBar[0].classList.add("hidden")
+            statusMessage[0].style.setProperty("color", "red");
+            break;
+        case "fetch":
+            loadingBar[0].classList.remove("hidden");
+            statusMessage[0].style.setProperty("color", "yellow");
+            break;
+        case "idle":
+        case "ok":
+        default:
+            loadingBar[0].classList.add("hidden")
+            statusMessage[0].style.setProperty("color", "green");
+            break;
+    } 
+}
 
 function bClick() {
     clickSound.play();
     console.log("Click!");
 }
 
-function themeChange(){
+function fTheme(){
     if (isDarkMode){
-        colors.style.setProperty('--bg', 'white');
-        colors.style.setProperty('--text','#080808');
+        color_var.style.setProperty('--bg', 'white');
+        color_var.style.setProperty('--text','#080808');
         
         isDarkMode = false;
     }
     else{
-        colors.style.setProperty('--bg', '#080808');
-        colors.style.setProperty('--text','white');
+        color_var.style.setProperty('--bg', '#080808');
+        color_var.style.setProperty('--text','white');
         isDarkMode = true;
     }
-    var docProperties = getComputedStyle(colors);
+    var docProperties = getComputedStyle(color_var);
     var colorObj = {
         "web" : {
             "--bg": docProperties.getPropertyValue('--bg'),
@@ -73,11 +87,103 @@ function themeChange(){
     
 }
 
-var bTheme = document.getElementById("bTheme");
+async function fList() {
+    LoadingBarStatus("fetch", "Fetching...")
+    
+    var data = {}
+    await fetch('/app/listEvents').then(async (response) => {
+        console.log("Success", data.events)
+        data = await response.json();
+        LoadingBarStatus("ok", "Idle");
+        for (var i = 0; i < Object.keys(data.events).length; i++){
+            console.log(`${data.events[i]["item"]}) ${data.events[i]["date"]} is ${data.events[i]["event"]}`);
+            div_screen.innerHTML = `${Number(data.events[i]["item"]) + 1}) ${data.events[i]["date"]} is ${data.events[i]["event"]}`
+        }
+    }).catch((err)=>{
+        data = {
+            "events" : ""
+        };
+        LoadingBarStatus("failure", "No Events Detected");
+    });
 
-if (bTheme != null) {
-    bTheme.onclick = themeChange;
+    if (data.events == "")
+    {
+        div_screen.innerHTML = `None`;
+    }
+    idleStatus();
 }
+
+async function fMdAddress(){
+    LoadingBarStatus("fetch", "Fetching...")
+    var markData = {
+        "markdown_path": inputMarkdownAddress.value
+    }
+    await fetch('/app/saveSettings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(markData)
+    }).then((res, req)=>{
+        LoadingBarStatus("ok", "Data saved");
+    })
+    .catch((err)=>{
+        LoadingBarStatus("failure", "Data failed to be saved");;
+        console.error(err);
+    })
+    idleStatus();
+}
+
+async function fMdList() {
+    LoadingBarStatus("fetch", "Fetching...")
+    var innerString = "Tasks:\n"
+    var data = {}
+    await fetch('/app/mdList')
+    .then(async (response) => {
+        data = await response.json();
+        console.log("Success", data["tasks"]);
+
+        for (var i = 0; i < Object.keys(data["tasks"]).length; i++){
+            console.log(`${i.toString().padStart(2, '0')}) ${data["tasks"][i]}`);
+            innerString += `${i.toString().padStart(2, '0')}) ${data["tasks"][i]}\n`
+            div_screen.innerHTML = innerString;
+        }
+        LoadingBarStatus("ok", "Idle");
+        console.log(data);
+    }).catch((err)=>{
+        data = {
+            "events" : ""
+        };
+        LoadingBarStatus("failure", "No Events Detected in Markdown List");
+    });
+
+    if (data.events == "")
+    {
+        div_screen.innerHTML = `None`;
+    }
+    idleStatus();
+}
+
+
+async function idleStatus(){
+    setTimeout(()=>{
+        LoadingBarStatus("green", "Idle");
+    }, 2000)
+}
+
+var ctrlButtons= {
+    "bTheme" : [fTheme, {}],
+    "bList" : [fList, {}],
+    "bPath" : [fMdAddress, {}],
+    "bMdList" : [fMdList, {}]
+}
+
+Object.entries(ctrlButtons).forEach(([buttonName, value]) => {
+    value[1] = document.getElementById(buttonName);
+    if (value[1] != null) {
+        value[1].onclick = value[0];
+    } 
+})
 
 for (let i = 0; i <buttons.length; i++)
 {
@@ -86,29 +192,32 @@ for (let i = 0; i <buttons.length; i++)
     button.addEventListener("click", bClick);
 }
 
+
 window.onscroll = function(){stickyDetection()};
 
-async function bAuthenticate() {
-    const response = await fetch('/app/listEvents');
+window.addEventListener('load', async () => {
+    var response = {};
+
+    await fetch('/app/loadSettings').then(async ()=>{
+        response = await fetch('/app/loadSettings');
+    })
+    .catch(async (err)=>{
+        await fTheme().then(async () => {
+            response = await fetch('/app/loadSettings');
+        })
+    })
     const data = await response.json();
-    console.log("Events", data.events)
-    for (var i = 0; i < Object.keys(data.events).length; i++){
-        console.log(`${data.events[i]["item"]}) ${data.events[i]["date"]} is ${data.events[i]["event"]}`);
-        screen.innerHTML = `${Number(data.events[i]["item"]) + 1}) ${data.events[i]["date"]} is ${data.events[i]["event"]}`
+    console.log("Loaded");
+    console.log(data);
+    color_var.style.setProperty("--bg", data.web["--bg"]);
+    color_var.style.setProperty("--text", data.web["--text"]);
+    isDarkMode = data.web["--text"] == "white" ? true : false;
+    color_var.style.getPropertyValue("--bg");
+    const loading_screen = document.getElementById("loading");
+    if (loading_screen != null){
+        loading_screen.classList.add("transparent")
+        setTimeout(()=>{
+            loading_screen.classList.add("hidden");
+        }, 250)
     }
-    if (data.events == null)
-    {
-        screen.innerHTML = `None`;
-    }
-    
-}
-
-async function bMark(){
-
-}
-
-var bList = document.getElementById("bList");
-
-if (bList != null){
-    bList.onclick = bAuthenticate;
-}
+})
