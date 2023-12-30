@@ -155,7 +155,7 @@ const mdListEvents = async (address) => {
   });
   for await (const line of rl){
     if (line.indexOf("- [") != -1){
-      var taskToDo = line.substring(line.indexOf("- [") + 6);
+      var taskToDo = line.substring(line.indexOf("- [") + 6)
       console.log(`${taskToDo}, ${line.indexOf("- [")}`);
       payload["tasks"].push(taskToDo);
     }
@@ -224,7 +224,7 @@ app.get('/loadSettings', async (req, res) => {
   logger(req, res, error, isReveal, appResponse);
 })
 
-app.get('/mdList', async (req, res) =>{
+app.get('/mdList', async (req, res) => {
   let error = {};
   await loadSavedSettings()
   .then(async (settings) => {
@@ -235,11 +235,15 @@ app.get('/mdList', async (req, res) =>{
       res.write(JSON.stringify(object), 'utf8', "Writing...");
       res.end();
     })
+    .catch((err) => {
+      error = err
+      res.writeHead(404);
+      res.end();
+    })
   })
   .catch((err)=>{
     error = err
     res.writeHead(404);
-    
     res.end();
   })
   logger(req,res,error,isReveal,"");

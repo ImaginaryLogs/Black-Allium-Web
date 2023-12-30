@@ -336,9 +336,11 @@ footer a {
   background-color: rgb(29, 24, 24);
   border: var(--bg);
   color: #fdfdfd;
-  height: 400px;
+  height: 50%;
   margin-left: 2%;
   width: 100%;
+  overflow: auto;
+  min-width: 100px;
 }
 #app #screen #status {
   display: flex;

@@ -312,7 +312,7 @@ footer {
     align-items: center;
     display: flex;
     justify-content: flex-start;
-    
+
     div {
         padding: var(--textsize);
         position: relative;
@@ -344,10 +344,11 @@ footer {
         background-color: rgb(29, 24, 24);
         border: var(--bg); 
         color: #fdfdfd;
-        height: 25*16px;
+        height: 50%;
         margin-left: 2%;
         width: 100%;
-        
+        overflow: auto;
+        min-width: 100px;
         #status {
             display: flex;
             justify-content: space-between;

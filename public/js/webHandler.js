@@ -61,7 +61,6 @@ function fTheme(){
     if (isDarkMode){
         color_var.style.setProperty('--bg', 'white');
         color_var.style.setProperty('--text','#080808');
-        
         isDarkMode = false;
     }
     else{
@@ -118,19 +117,23 @@ async function fMdAddress(){
     var markData = {
         "markdown_path": inputMarkdownAddress.value
     }
-    await fetch('/app/saveSettings', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(markData)
-    }).then((res, req)=>{
-        LoadingBarStatus("ok", "Data saved");
-    })
-    .catch((err)=>{
-        LoadingBarStatus("failure", "Data failed to be saved");;
-        console.error(err);
-    })
+    if(confirm(`Do you want to save the following Data? Address:${markData["markdown_path"]}`)){  
+        await fetch('/app/saveSettings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(markData)
+        }).then((res, req)=>{
+            LoadingBarStatus("ok", "Data saved");
+        })
+        .catch((err)=>{
+            LoadingBarStatus("failure", "Data failed to be saved");;
+            console.error(err);
+        })
+    } else {
+        LoadingBarStatus("failure", "Data not submitted");
+    }
     idleStatus();
 }
 
@@ -138,14 +141,16 @@ async function fMdList() {
     LoadingBarStatus("fetch", "Fetching...")
     var innerString = "Tasks:\n"
     var data = {}
+    
+    
     await fetch('/app/mdList')
     .then(async (response) => {
         data = await response.json();
         console.log("Success", data["tasks"]);
 
         for (var i = 0; i < Object.keys(data["tasks"]).length; i++){
-            console.log(`${i.toString().padStart(2, '0')}) ${data["tasks"][i]}`);
-            innerString += `${i.toString().padStart(2, '0')}) ${data["tasks"][i]}\n`
+            console.log(` ${i.toString().padStart(2, '0')}) ${data["tasks"][i]}`);
+            innerString += ` ${i.toString().padStart(2, '0')}) ${data["tasks"][i]}\n`
             div_screen.innerHTML = innerString;
         }
         LoadingBarStatus("ok", "Idle");
@@ -161,17 +166,21 @@ async function fMdList() {
     {
         div_screen.innerHTML = `None`;
     }
+    
     idleStatus();
 }
 
-
+/**
+ * Returns the status to normal.
+ * @returns void
+ */
 async function idleStatus(){
     setTimeout(()=>{
         LoadingBarStatus("green", "Idle");
     }, 2000)
 }
 
-var ctrlButtons= {
+var ctrlButtons = {
     "bTheme" : [fTheme, {}],
     "bList" : [fList, {}],
     "bPath" : [fMdAddress, {}],
