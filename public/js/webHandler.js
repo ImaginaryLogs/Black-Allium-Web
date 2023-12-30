@@ -1,30 +1,29 @@
 console.log("Script Loaded.");
 
-// Get the elements
-var navbar = document.getElementById("navbar");
-var navButtons = navbar.getElementsByTagName("a");
-var navbarYLocation = navbar.offsetTop;
 
 var clickSound = new Audio("../sounds/buttonClick.mp3");
 
 var buttons = document.getElementsByClassName("pressable");
-var color_var = document.querySelector(':root');
+var docVariables = document.querySelector(':root');
+var loadingBar = document.getElementById("statusPanel")?.getElementsByClassName("loading_bar");
+var statusSign = document.getElementById("statusSign");
+var statusMessage = statusSign?.getElementsByTagName("b");
 var div_screen = document.getElementById("List");
-try{
-    var loadingBar = document.getElementById("status").getElementsByClassName("loading_bar");
-    var statusSign = document.getElementById("statusSign");
-    var statusMessage = statusSign.getElementsByTagName("b");
-    var statusCircle = document.getElementById("circleStatus")
-    var inputMarkdownAddress = document.getElementById("bPathText");
-} catch {
+var statusCircle = document.getElementById("circleStatus")
+var inputMarkdownAddress = document.getElementById("bPathText");
+var expandable_buttons = document.getElementsByClassName("expandable_button");
 
-}
 var isDarkMode = true;
+
+// Get the elements
 
 
 
 function stickyDetection() {
-    if (window.scrollY >= navbarYLocation) {
+    var navbar = document.getElementById("navbar");
+    var navButtons = navbar.getElementsByTagName("a");
+    var navbarYPos = navbar.offsetTop;
+    if (window.scrollY >= navbarYPos) {
         console.log("Below!");
         navbar.classList.add("sticky")
     } else {
@@ -52,27 +51,33 @@ function LoadingBarStatus(status, message) {
     } 
 }
 
+async function idleStatus(){
+    setTimeout(()=>{
+        LoadingBarStatus("green", "Idle");
+    }, 2000)
+}
+
+// Buttons functions
 function bClick() {
     clickSound.play();
     console.log("Click!");
 }
 
-function fTheme(){
-    if (isDarkMode){
-        color_var.style.setProperty('--bg', 'white');
-        color_var.style.setProperty('--text','#080808');
+function fTheme() {
+    if (isDarkMode) {
+        docVariables.style.setProperty('--bg', 'white');
+        docVariables.style.setProperty('--text','#080808');
         isDarkMode = false;
-    }
-    else{
-        color_var.style.setProperty('--bg', '#080808');
-        color_var.style.setProperty('--text','white');
+    } else {
+        docVariables.style.setProperty('--bg', '#080808');
+        docVariables.style.setProperty('--text','white');
         isDarkMode = true;
     }
-    var docProperties = getComputedStyle(color_var);
+    var docProperties = getComputedStyle(docVariables);
     var colorObj = {
         "web" : {
             "--bg": docProperties.getPropertyValue('--bg'),
-        "--text": docProperties.getPropertyValue('--text')
+            "--text": docProperties.getPropertyValue('--text')
         }
     }
     console.log(colorObj);
@@ -112,7 +117,7 @@ async function fList() {
     idleStatus();
 }
 
-async function fMdAddress(){
+async function fMdAddress() {
     LoadingBarStatus("fetch", "Fetching...")
     var markData = {
         "markdown_path": inputMarkdownAddress.value
@@ -170,21 +175,20 @@ async function fMdList() {
     idleStatus();
 }
 
-/**
- * Returns the status to normal.
- * @returns void
- */
-async function idleStatus(){
-    setTimeout(()=>{
-        LoadingBarStatus("green", "Idle");
-    }, 2000)
+async function fMdToGcEvents() {
+    LoadingBarStatus("fetch", "Fetching...");
+
+    await fetch('/app/MdToGcEvents')
+
+    idleStatus();
 }
 
 var ctrlButtons = {
     "bTheme" : [fTheme, {}],
     "bList" : [fList, {}],
     "bPath" : [fMdAddress, {}],
-    "bMdList" : [fMdList, {}]
+    "bMdList" : [fMdList, {}],
+    "bAddEvents" : [fMdToGcEvents, {}]
 }
 
 Object.entries(ctrlButtons).forEach(([buttonName, value]) => {
@@ -194,13 +198,30 @@ Object.entries(ctrlButtons).forEach(([buttonName, value]) => {
     } 
 })
 
-for (let i = 0; i <buttons.length; i++)
+for (var i = 0; i <buttons.length; i++)
 {
     let button = buttons[i];
     console.log(button);
     button.addEventListener("click", bClick);
 }
 
+if (expandable_buttons)
+{
+    for (var i = 0; i < expandable_buttons.length; i++){
+        expandable_buttons[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                this.parentNode.classList.remove("active_panel");
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                this.parentNode.classList.add("active_panel");
+            }
+            
+        })
+    }
+}
 
 window.onscroll = function(){stickyDetection()};
 
@@ -218,10 +239,10 @@ window.addEventListener('load', async () => {
     const data = await response.json();
     console.log("Loaded");
     console.log(data);
-    color_var.style.setProperty("--bg", data.web["--bg"]);
-    color_var.style.setProperty("--text", data.web["--text"]);
+    docVariables.style.setProperty("--bg", data.web["--bg"]);
+    docVariables.style.setProperty("--text", data.web["--text"]);
     isDarkMode = data.web["--text"] == "white" ? true : false;
-    color_var.style.getPropertyValue("--bg");
+    docVariables.style.getPropertyValue("--bg");
     const loading_screen = document.getElementById("loading");
     if (loading_screen != null){
         loading_screen.classList.add("transparent")

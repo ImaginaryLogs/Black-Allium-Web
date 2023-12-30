@@ -7,6 +7,7 @@
     <link rel = "icon" type= "image/x-icon" href="../images/canary.png">
     <link rel="stylesheet" href="../css/styles.css">
     <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css?family=Fira Code' rel='stylesheet'>
     <script type="module" src="../js/webHandler.js"></script>
 </head>
 <body>
@@ -24,19 +25,30 @@
             <div id="control-panel">
                 <h1>Controls:</h1>
                 <ul>
-                    <li><button class="pressable" id="bTheme"> Theme </button></li>
-                    <li><button class="pressable" id="bList"> List </button></li>
+                    <li><button class="pressable" id="bTheme"> Website Theme </button></li>
+                    <li><button class="pressable" id="bList"> Calendar Tasks </button></li>
                     <li>
-                        <label>
-                            <button class="pressable" id="bPath"> Path </button>
-                            <input type="text" id="bPathText"></input placeholder="Input markdown file address">
-                        </label>
+                        <div>
+                            <button class="pressable expandable_button"> Markdown Path </button>
+                            <div class="expandable_panel">
+                                <div>
+                                    <label for="bPathText">Address:</label>
+                                    <input type="text" id="bPathText"></input placeholder="Input markdown file address">
+                                </div>
+                                <div>
+                                    <button class="pressable" id="bPath">Submit</button>
+                                </div>
+                            </div>
+                        </div>
                     </li>
-                    <li><button class="pressable" id="bMdList"> mdList </button</li>
+                    <li><button class="pressable" id="bMdList"> Markdown Tasks </button></li>
+                    <li>
+                        <button class="pressable" id="bAddEvents"> Add Tasks </button>
+                    </li>
                 </ul>
             </div>
             <div id="screen">
-                <div id="status">
+                <div id="statusPanel">
                     <p id="statusSign"><b>Status:</b> Idle</p>
                     <div class="loading_bar hidden">
                         <div class="loading_bar_animation">

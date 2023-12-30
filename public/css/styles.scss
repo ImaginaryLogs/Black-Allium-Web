@@ -5,7 +5,12 @@ https://observablehq.com/@shan/oklab-color-wheel
 
 :root {
     --bg: #080808;
+    --bg_tint1: rgb(29, 24, 24);
+    --bg_tint2: rgb(46, 36, 36);
+    --bg_alt: #e6d3dd;
+    --bg_alt_shade: #c4a5b6;
     --text: #fdfdfd;
+    --text_shade: #dddddd;
     --primary: #e9007a;
     --primaryShade: #7f055c;
     --secondary: #C375FA; // #C375FA or #61db82
@@ -14,6 +19,7 @@ https://observablehq.com/@shan/oklab-color-wheel
     --ctrlLoadSize: 30px;
     --pageLoadSize: 300px;
     --offShift: 20px;
+
 }
 
 /*|| General*/
@@ -22,7 +28,7 @@ html {
 }
 
 body {
-    font-family: 'Poppins';
+    font-family: 'Fira Code';
     background-color: var(--bg);
     color: var(--text);
     font-size: var(--textsize);
@@ -63,6 +69,7 @@ footer {
             cursor: pointer;
             opacity: 0.7;
         }
+        
     }
 
     p {
@@ -92,12 +99,32 @@ footer {
     }
 }
 
+.active {
+    background-color: var(--primary);
+}
+
+.active_panel{
+    background-color: var(--bg_tint2);
+}
+
+.pressable{
+    &.expandable_button{
+        &.active {
+            background-color: var(--primary);   
+        }
+    }
+}
+
 .transparent{
     opacity: 0;
 }
 
 .invisible{
     visibility: hidden;
+}
+
+.expandable_panel {
+    max-height: 0px;
 }
 
 .loading_bar { //loadingio-spinner-wedges-k3g05s1856d
@@ -267,7 +294,6 @@ footer {
     transition: opacity 0.25s;
 }
 
-
 #navbar {
     margin: 0;
     z-index: 1;
@@ -279,7 +305,7 @@ footer {
         margin: 0;
         padding: 0;
         overflow: hidden;
-        background-color: #333;
+        background-color: var(--bg_tint1);
     }
 
     li {
@@ -309,39 +335,63 @@ footer {
 }
 
 #app {
-    align-items: center;
+    align-items: flex-start;
     display: flex;
-    justify-content: flex-start;
-
-    div {
-        padding: var(--textsize);
+    justify-content: center;
+    
+    > div {
         position: relative;
+        padding: var(--textsize);
+        > div {
+            margin: 0;
+            > div {
+                padding: var(--textsize);
+            }
+        }
     }
 
     #control-panel {
         width: 100%;
+        background-color: var(--bg_tint1);     
         li {
             list-style-type: none;
             margin: 5px;
+            font-size: 32px;
+            align-items: center;
+            color: #fdfdfd;
             button {
                 width: 16*16px;
+                color: #fdfdfd;
             }
-
-            label {
-                display: flex!important;
+            > div {
+                &.active{
+                    background-color: #6027b0;
+                }
+                overflow: hidden;
+                > div {
+                    
+                    > div {
+                        display: inline-block;
+                        align-items: flex-start;
+                        justify-content: center;
+                        padding: 16px;
+                        
+                    }
+                }
                 input {
                     padding: 0px 16px ;
                     font-size: 32px;
                     margin: 5px;
                     height: 16*4px;
-                    
                 }
             }
+            
+            
         }
     }
 
     #screen {
-        background-color: rgb(29, 24, 24);
+        background-color: var(--bg_tint1);
         border: var(--bg); 
         color: #fdfdfd;
         height: 50%;
@@ -367,6 +417,9 @@ footer {
             b {
                 color: green;
             }
+        }
+        pre {
+            font-family: 'Fira Code';
         }
     }
 }
