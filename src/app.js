@@ -8,11 +8,11 @@ import * as process from 'node:process'; //  Process is a native Node.js module 
 import * as readline from 'node:readline';
 import logger from './errorHandling.js';
 
-const SCOPES = ['https://www.googleapis.com/auth/calendar'];
-const CLIENT_PATH = path.join(path.dirname(process.cwd()), 'client');
-const CREDIT_PATH = path.join(CLIENT_PATH, 'client_secrets.json');
-const SETINS_PATH = path.join(CLIENT_PATH, 'client_settings.json')            // Token is a generated id that automatically does authentication.
-const TOKENS_PATH = path.join(CLIENT_PATH, 'token.json');
+const urlScope = ['https://www.googleapis.com/auth/calendar'];
+const pathClient = path.join(path.dirname(process.cwd()), 'client');
+const pathCredit = path.join(pathClient, 'client_secrets.json');
+const pathSetins = path.join(pathClient, 'client_settings.json')            
+const pathTOKENS = path.join(pathClient, 'token.json');               // Token is a generated id that automatically does authentication.
 
 const regDateYMD = /^\d{4}-\d{2}-\d{2}$/;
 const emojiStart = '🛫';
@@ -23,19 +23,111 @@ const emojiDone = '✅'
 const app = express.Router();
 const port = 8081;
 const isReveal = true;
-var utcNow = new Date();
-var utcTom = Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), utcNow.getUTCDate() + 1, 10, 0, 0);
+
 // "markdown_path":"D:\\Extra Files\\Maynila Repository\\Port for Desktop\\Manila Manuscripts\\01 HOME\\Tasks.md",
 
 
 
+
+const loadSavedSettings = async () => {
+  try {
+    var content = await fsp.readFile(pathSetins);
+    return Promise.resolve(JSON.parse(content));
+  } catch(err) {
+    return Promise.reject(err);
+  }
+}
+
+const SaveSettings = async (newInfo) => {
+  let payloadSettings = {};
+  loadSavedSettings()
+  .then(async (response) => {
+    const updatedKeys = Object.keys(newInfo);
+    payloadSettings = response;
+    for (let i = 0; i < updatedKeys.length; i++) {
+      payloadSettings[updatedKeys[i]] = newInfo[updatedKeys[i]]
+    }
+    await fsp.writeFile(pathSetins, JSON.stringify(payloadSettings));
+  })
+  .catch(async (err) =>{
+    payloadSettings = { "markdown_path":"", "web" : { "--bg":"#080808", "--text":"white" }}
+    await fsp.writeFile(pathSetins, JSON.stringify(payloadSettings));
+  })
+}
+
+/**
+ * If by-pass token exist, it loads it in.
+ * @return {Promise<OAuth2Client|null>} 
+ */
+const loadSavedCredits = async () => {
+  try {
+    const content = await fsp.readFile(pathTOKENS);  // Generate a async process that reads the file.
+    const credentials = JSON.parse(content);
+    return google.auth.fromJSON(credentials);      // If it exists, return it.
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Serializes credentials to a file compatible with GoogleAUth.fromJSON.
+ *
+ * @param {OAuth2Client} client
+ * @return {Promise<void>}
+ */
+const saveNewCredits = async (client) => {
+  const content = await fsp.readFile(pathCredit);
+  const keys = JSON.parse(content);
+  const key = keys.installed || keys.web;
+  const payload = JSON.stringify({
+    type: 'authorized_user',
+    client_id: key.client_id,
+    client_secret: key.client_secret,
+    refresh_token: client.credentials.refresh_token,
+  });
+  await fsp.writeFile(pathTOKENS, payload);
+}
+
+/**
+ * Load or request or authorization to call APIs.
+ *
+ */
+const authorize = async () => {
+  let client = await loadSavedCredits();
+  if (client) {
+    return client;
+  }
+  client = await authenticate({
+    scopes: urlScope,
+    keyfilePath: pathCredit,
+  });
+  console.log(client);
+  if (client.credentials) {
+    await saveNewCredits(client);
+  }
+  return Promise.resolve(client);
+}
+
+const deauthorize = async () => {
+  const payload = JSON.stringify({
+    type: '',
+    client_id: '',
+    client_secret: '',
+    refresh_token: '',
+  });
+  await fsp.writeFile(pathTOKENS, payload);
+}
+
+
 class taskEvents {
-  constructor(Summary, Start = utcNow, End = utcTom){
-    Start = (Start == "") ? utcNow.toUTCString() : Start;
-    End = (End == "") ? utcTom.toUTCString() : End;
+  constructor(Summary, Start = "", End = ""){
+    let utcNow = new Date();
+    let utcTom = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), utcNow.getUTCDate() + 1, 10, 0, 0));
+    console.log(utcNow);
+    console.log(utcTom);
     
-    let utcStart = isValidDate(Start) ? new Date(Start).toUTCString() : utcNow.toUTCString();
-    let utcEnd = isValidDate(End) ? new Date(End).toUTCString() : utcTom.toUTCString();
+    let utcStart = isValidDate(Start) ? new Date(Start) : utcNow();
+    let utcEnd = isValidDate(End) ? new Date(End) : utcTom();
     this.summary = `OBS: ${Summary}`;
     this.start = {
       dateTime: utcStart,
@@ -56,98 +148,11 @@ function isValidDate(dateString) {
   return date.toISOString().slice(0,10) === dateString;
 }
 
-const loadSavedSettings = async () => {
-  try {
-    var content = await fsp.readFile(SETINS_PATH);
-    return Promise.resolve(JSON.parse(content));
-  } catch(err) {
-    return Promise.reject(err);
-  }
-}
-
-const SaveSettings = async (newInfo) => {
-  let payloadSettings = {};
-  loadSavedSettings()
-  .then(async (response) => {
-    const updatedKeys = Object.keys(newInfo);
-    console.log(updatedKeys);
-    console.log(response);
-    payloadSettings = response;
-    for (let i = 0; i < updatedKeys.length; i++) {
-      payloadSettings[updatedKeys[i]] = newInfo[updatedKeys[i]]
-      console.log(payloadSettings[updatedKeys[i]]);
-    }
-    await fsp.writeFile(SETINS_PATH, JSON.stringify(payloadSettings));
-  }).catch(async (err) =>{
-    payloadSettings = {
-      "markdown_path":"",
-      "web" : {
-        "--bg":"#080808",
-        "--text":"white"
-      }
-    }
-    await fsp.writeFile(SETINS_PATH, JSON.stringify(payloadSettings));
-  })
-}
-
-/**
- * If by-pass token exist, it loads it in.
- * @return {Promise<OAuth2Client|null>} 
- */
-const loadSavedCredits = async () => {
-  try {
-    console.log("true")
-    const content = await fsp.readFile(TOKENS_PATH);  // Generate a async process that reads the file.
-    const credentials = JSON.parse(content);
-    return Promise.resolve(google.auth.fromJSON(credentials));       // If it exists, return it.
-  } catch (error) {
-    return Promise.reject();
-  }
-}
-
-/**
- * Serializes credentials to a file compatible with GoogleAUth.fromJSON.
- *
- * @param {OAuth2Client} client
- * @return {Promise<void>}
- */
-const saveCredits = async (client) => {
-  const content = await fsp.readFile(CREDIT_PATH);
-  const keys = JSON.parse(content);
-  const key = keys.installed || keys.web;
-  const payload = JSON.stringify({
-    type: 'authorized_user',
-    client_id: key.client_id,
-    client_secret: key.client_secret,
-    refresh_token: client.credentials.refresh_token,
-  });
-  await fsp.writeFile(TOKENS_PATH, payload);
-}
-
-/**
- * Load or request or authorization to call APIs.
- *
- */
-const authorize = async () => {
-  let client = await loadSavedCredits();
-  if (client) {
-    return client;
-  }
-  client = await authenticate({
-    scopes: SCOPES,
-    keyfilePath: CREDIT_PATH,
-  });
-  if (client.credentials) {
-    await saveCredits(client);
-  }
-  return Promise.resolve(client);
-}
-
 /**
  * Lists the next 10 events on the user's primary calendar.
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
-const gclistEvents = async (auth) => {
+const listEventsGoogleC = async (auth) => {
   const calendar = google.calendar({version: 'v3', auth});
   const res = await calendar.events.list({
     calendarId: 'primary',
@@ -181,7 +186,7 @@ const gclistEvents = async (auth) => {
   });
 }
 
-const mdGetEvents = async (address) => {
+const listEventsMarkdwn = async (address) => {
   var payload = { "tasks" : [] }
   const fileStream = fs.createReadStream(address);
   const rl = readline.createInterface({
@@ -199,7 +204,7 @@ const mdGetEvents = async (address) => {
   return payload;
 }
 
-const createValidEvent = async (eventString) => {
+const eventCreate = (eventString) => {
   let dateType, dateIndex, validData;
   let minDate = eventString.length;
   let isValidDate = false;
@@ -227,64 +232,82 @@ const createValidEvent = async (eventString) => {
     if (stringIndex != -1) {
       isValidDate = true;
       let dateYMD = eventString.substring(stringIndex).substring(2, 13).replace(/^\s+|\s+$/gm,'');
-      console.log(`Valid: ${eventString}`);
-      console.log(dateType, dateYMD);
       minDate = (stringIndex < minDate) ? stringIndex : minDate;
       dateObject["dateYMD"] = dateYMD;
     }
   }
-  if (!isValidDate || dateParams["dateDone"]["dateIndex"] != -1) {
-    return "";
+
+  let utcNow = new Date();
+
+  if (!isValidDate ||   
+      dateParams["dateDone"]["dateIndex"] != -1 ||
+      (new Date(dateParams["dateEnd"]["dateYMD"]).getTime() < utcNow.getTime())
+      ) 
+  {
+    return {};
   }
 
   let summary = eventString.substring(0, minDate).replace(/^\s+|\s+$/gm,'');
+  
   if (dateParams["dateStart"]["dateIndex"] != -1 || dateParams["dateEnd"]["dateIndex"] != -1){
     validData = new taskEvents(summary, dateParams["dateStart"]["dateYMD"], dateParams["dateEnd"]["dateYMD"]);
   }
-  console.log(validData);
   return validData;
 }
 
-const mdToGcEvents = async (auth) => {
-  let taskObj;
+const eventDelete = async () => {
+
+}
+
+const eventPublishMdToGc = async (auth) => {
+  let taskObj = {}, eventObj = {};
   const calendar = google.calendar({version: 'v3', auth});
+
   await loadSavedSettings()
   .then(async (settings) => {
     const md_address = settings["markdown_path"];
-    await mdGetEvents(md_address).then(async (eventsToList) => {
-      console.log(eventsToList);
-      for (const line of eventsToList["tasks"]){
-        taskObj = createValidEvent(line);
-        if (taskObj != "") {
-          let res1 = await calendar.events.list({
-            calendarId: 'primary',
-            timeMin: new Date().toISOString(),
-            maxResults: 10,
-            singleEvents: true,
-            orderBy: 'startTime',
-          });
-          console.log(res1)
-          let res = await calendar.events.insert({
-            calendarId: 'primary',
-            resource: taskObj},
-            (err, eventA) => {
-              if (err) {
-                console.error("Error in Calendar Service." + err)
-                console.error(err)
-                return
-              }
-            console.log('Event created: %s', eventA.htmlLink); 
-            })
-
-          console.log(res)
+    return await listEventsMarkdwn(md_address);
+  })
+  .then(async (eventsToList) => {
+    console.log(eventsToList);
+    for (const line of eventsToList["tasks"]){
+      taskObj = eventCreate(line);
+      if (Object.keys(taskObj).length !== 0) {
+        eventObj = {
+          'summary' : taskObj.summary,
+          'start' : taskObj.start,
+          'end' : taskObj.end
         }
+        let data = await calendar.events.insert(
+          {
+            auth: auth,
+            calendarId: 'primary',
+            resource: taskObj
+          },
+          (err, eventA) => {
+            if (err) {
+              console.error("Error in Calendar Service." + err)
+              console.error(err)
+              return
+            }
+          console.log('Event created: %s', eventA); 
+          }
+        )
+        return new Promise((res)=>{
+          Reject(data);
+        })
       }
-    })
+
+    }
   })
   .catch(err => {
     console.error(err);
+    return new Promise((err)=>{
+      Reject(err);
+    })
   })
 }
+
 app.use(express.json());
 
 app.use(express.urlencoded());
@@ -297,7 +320,7 @@ app.get('/listEvents', (req, res) => {
   let error = {}
   authorize()
   .then(async (client) => {
-    var object = await gclistEvents(client);
+    var object = await listEventsGoogleC(client);
     res.writeHead(200, {"Content-Type": "application/json"});
     res.write(JSON.stringify(object), 'utf8', "Writing...");
     res.end();
@@ -314,7 +337,8 @@ app.get('/MdToGcEvents', async (req, res) =>{
   let error = {}
   authorize()
   .then(async (client) =>{
-    await mdToGcEvents(client);
+    let response = await eventPublishMdToGc(client);
+    console.log(response.body);
     res.writeHead(200);
     res.end();
   })
@@ -325,15 +349,6 @@ app.get('/MdToGcEvents', async (req, res) =>{
   })
   logger(req, res, error, isReveal, "")
 })
-
-app.post('/saveSettings', (req, res) =>{
-  var appResponse = "Saved Settings"
-  SaveSettings(req.body);
-  res.writeHead(200)
-  res.write(appResponse)
-  res.end();
-  logger(req, res, "", isReveal, appResponse);
-});
 
 app.get('/loadSettings', async (req, res) => {
   var appResponse = "Loaded Settings"
@@ -365,7 +380,7 @@ app.get('/mdList', async (req, res) => {
   await loadSavedSettings()
   .then(async (settings) => {
     const md_address = settings["markdown_path"];
-    await mdGetEvents(md_address)
+    await listEventsMarkdwn(md_address)
     .then((object)=>{
       res.writeHead(200, {"Content-Type": "application/json"});
       res.write(JSON.stringify(object), 'utf8', "Writing...");
@@ -385,5 +400,16 @@ app.get('/mdList', async (req, res) => {
   logger(req,res,error,isReveal,"");
 })
 
+app.post('/saveSettings', (req, res) =>{
+  let appResponse = "Saved Settings"
+  SaveSettings(req.body);
+  res.writeHead(200)
+  res.write(appResponse)
+  res.end();
+  logger(req, res, "", isReveal, appResponse);
+});
 
+app.delete('/signOut', (req, res) => {
+
+})
 export default app;
