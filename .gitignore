@@ -1,1 +1,2 @@
-client/*
+/lib/client/token.json
+/lib/client/client_secrets.json
