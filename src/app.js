@@ -15,6 +15,7 @@ const pathSetins = path.join(pathClient, 'client_settings.json')
 const pathTOKENS = path.join(pathClient, 'token.json');               // Token is a generated id that automatically does authentication.
 
 const regDateYMD = /^\d{4}-\d{2}-\d{2}$/;
+const regOBS = /OBS:/g
 const emojiStart = '🛫';
 const emojiEnd = '📅';
 const emojiSched = '⏳'
@@ -26,33 +27,48 @@ const isReveal = true;
 
 // "markdown_path":"D:\\Extra Files\\Maynila Repository\\Port for Desktop\\Manila Manuscripts\\01 HOME\\Tasks.md",
 
-
-
+class taskEvents {
+  constructor(Summary, Start = "", End = ""){
+    let utcNow = new Date();
+    let utcTom = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), utcNow.getUTCDate() + 1, 10, 0, 0)); 
+    let utcStart = isValidDate(Start) ? new Date(Start) : utcNow();
+    let utcEnd = isValidDate(End) ? new Date(End) : utcTom();
+    this.summary = `OBS: ${Summary}`;
+    this.start = {
+      dateTime: utcStart,
+      timeZone: "Asia/Manila"
+    };
+    this.end = {
+      dateTime: utcEnd,
+      timeZone: "Asia/Manila"
+    };
+  }
+}
 
 const loadSavedSettings = async () => {
   try {
     var content = await fsp.readFile(pathSetins);
     return Promise.resolve(JSON.parse(content));
   } catch(err) {
+    console.log(err);
     return Promise.reject(err);
   }
 }
 
-const SaveSettings = async (newInfo) => {
+const SaveSettings = async newInfo => {
   let payloadSettings = {};
-  loadSavedSettings()
-  .then(async (response) => {
+  try {
+    let oldSettings = await loadSavedSettings();
     const updatedKeys = Object.keys(newInfo);
-    payloadSettings = response;
+    payloadSettings = oldSettings;
     for (let i = 0; i < updatedKeys.length; i++) {
-      payloadSettings[updatedKeys[i]] = newInfo[updatedKeys[i]]
+      payloadSettings[updatedKeys[i]] = newInfo[updatedKeys[i]];
     }
     await fsp.writeFile(pathSetins, JSON.stringify(payloadSettings));
-  })
-  .catch(async (err) =>{
+  } catch (error) {
     payloadSettings = { "markdown_path":"", "web" : { "--bg":"#080808", "--text":"white" }}
     await fsp.writeFile(pathSetins, JSON.stringify(payloadSettings));
-  })
+  }
 }
 
 /**
@@ -60,13 +76,18 @@ const SaveSettings = async (newInfo) => {
  * @return {Promise<OAuth2Client|null>} 
  */
 const loadSavedCredits = async () => {
-  try {
-    const content = await fsp.readFile(pathTOKENS);  // Generate a async process that reads the file.
-    const credentials = JSON.parse(content);
-    return google.auth.fromJSON(credentials);      // If it exists, return it.
-  } catch (error) {
-    return null;
-  }
+  let answer = {}
+  await fsp.readFile(pathTOKENS)
+  .then((content) =>{
+    let credentials = JSON.parse(content);
+    let googleCredits = google.auth.fromJSON(credentials);
+    answer = googleCredits 
+  })
+  .catch((err) =>{
+    console.log(err);
+    answer = null
+  }) 
+  return Promise.resolve(answer);
 }
 
 /**
@@ -118,46 +139,23 @@ const deauthorize = async () => {
   await fsp.writeFile(pathTOKENS, payload);
 }
 
-
-class taskEvents {
-  constructor(Summary, Start = "", End = ""){
-    let utcNow = new Date();
-    let utcTom = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), utcNow.getUTCDate() + 1, 10, 0, 0));
-    console.log(utcNow);
-    console.log(utcTom);
-    
-    let utcStart = isValidDate(Start) ? new Date(Start) : utcNow();
-    let utcEnd = isValidDate(End) ? new Date(End) : utcTom();
-    this.summary = `OBS: ${Summary}`;
-    this.start = {
-      dateTime: utcStart,
-      timeZone: "Asia/Manila"
-    };
-    this.end = {
-      dateTime: utcEnd,
-      timeZone: "Asia/Manila"
-    };
-  }
-}
-
-function isValidDate(dateString) {
+const isValidDate = (dateString) => {
   if(!dateString.match(regDateYMD)) return false;  
   let date = new Date(dateString);
   let dNum = date.getTime();
   if(!dNum && dNum !== 0) return false; // NaN value, Invalid date
   return date.toISOString().slice(0,10) === dateString;
 }
-
 /**
  * Lists the next 10 events on the user's primary calendar.
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
-const listEventsGoogleC = async (auth) => {
+const listEventsGoogleCalendar = async auth => {
   const calendar = google.calendar({version: 'v3', auth});
   const res = await calendar.events.list({
     calendarId: 'primary',
     timeMin: new Date().toISOString(),
-    maxResults: 10,
+    maxResults: 30,
     singleEvents: true,
     orderBy: 'startTime',
   });
@@ -167,17 +165,20 @@ const listEventsGoogleC = async (auth) => {
     console.log('No upcoming events found.');
     return Promise().reject();
   }
-  console.log('Upcoming 10 events:');
+  //console.log('Upcoming 30 events:');
   let data = {};
   let eventsList = [];
   let eventInfo = {};
   receivedData.map((event, i) => {
     eventInfo = {}
     const start = event.start.dateTime || event.start.date;
-    console.log(`${i}) ${start} - ${event.summary}`);
+    const end = event.end.dateTime || event.end.date;
+    //console.log(`${i}) ${start} - ${event.summary}, ${event.id}`);
     eventInfo["item"] = String(i);
     eventInfo["date"] = String(start);
     eventInfo["event"] = event.summary;
+    eventInfo["dateEnd"] = String(end);
+    eventInfo["id"] = event.id;
     eventsList.push(eventInfo);
   });
   data["events"] = eventsList;
@@ -186,7 +187,7 @@ const listEventsGoogleC = async (auth) => {
   });
 }
 
-const listEventsMarkdwn = async (address) => {
+const listEventsMarkdown = async address => {
   var payload = { "tasks" : [] }
   const fileStream = fs.createReadStream(address);
   const rl = readline.createInterface({
@@ -196,15 +197,15 @@ const listEventsMarkdwn = async (address) => {
   for await (const line of rl){
     if (line.indexOf("- [") != -1){
       var taskToDo = line.substring(line.indexOf("- [") + 6)
-      console.log(`${taskToDo}, ${line.indexOf("- [")}`);
+      // console.log(`${taskToDo}, ${line.indexOf("- [")}`);
       payload["tasks"].push(taskToDo);
     }
   }
-  console.log(payload);
+  // console.log(payload);
   return payload;
 }
 
-const eventCreate = (eventString) => {
+const eventCheckValid = (eventString) => {
   let dateType, dateIndex, validData;
   let minDate = eventString.length;
   let isValidDate = false;
@@ -255,102 +256,176 @@ const eventCreate = (eventString) => {
   return validData;
 }
 
-const eventDelete = async () => {
+const eventDelete = async (auth, eventId) => {
+  try {
+    const calendar = google.calendar({version: 'v3', auth});
 
+    calendar.events.delete({
+      calendarId : 'primary',
+      eventId : eventId
+    });
+    return new Promise((resolve, reject) => {
+      resolve(`Deleted:${eventId}`);
+    });
+  } catch (error) {
+    return new Promise((resolve, reject) => {
+      reject(error);
+    });
+  }
 }
 
-const eventPublishMdToGc = async (auth) => {
-  let taskObj = {}, eventObj = {};
+const eventGetDesync = async(auth, syncedObj) => {
+  let isEventSync = false, 
+      pubEventSummary = "",
+      eventsDesync = {"tasks" : []};
+  try {
+    const settings = await loadSavedSettings();
+    const requestedEvents = await listEventsMarkdown(settings["markdown_path"]);
+    const publishedEvents = await listEventsGoogleCalendar(auth);
+    for (const publishedEvent of publishedEvents["events"]){
+      isEventSync = false;
+      let taskIdentifier = publishedEvent["event"];
+      if (!taskIdentifier.startsWith("OBS:")){
+        continue;
+      }
+      //console.log(publishedEvent)
+      for (let requestedEvent of requestedEvents["tasks"]) {
+        requestedEvent = eventCheckValid(requestedEvent);
+        if (Object.keys(requestedEvent).length == 0 || requestedEvent.hasOwnProperty("matched")){
+          continue;
+        }
+        //console.log(`\"${requestedEvent.summary}\" and \"${publishedEvent["event"]}\"`)
+        if (!(publishedEvent["event"].localeCompare(requestedEvent.summary))){
+          isEventSync = true;
+          syncedObj["tasks"].push(publishedEvent["event"].slice("OBS: ".length))
+          //console.log("Exact Match!");
+          requestedEvent["matched"] = true;
+        }
+      }
+      if (!isEventSync) {
+        eventsDesync["tasks"].push(publishedEvent["id"])
+      }
+    }
+    //console.log(eventsDesync)
+    return eventsDesync;
+  } catch (error) {
+    console.error(error)
+    return error
+  }
+}
+
+const eventPublishMdToGc = async (auth, syncedObj) => {
+  let validTaskObj = {}, eventObj = {}, syncedEvent = false;
   const calendar = google.calendar({version: 'v3', auth});
 
-  await loadSavedSettings()
-  .then(async (settings) => {
-    const md_address = settings["markdown_path"];
-    return await listEventsMarkdwn(md_address);
-  })
-  .then(async (eventsToList) => {
-    console.log(eventsToList);
-    for (const line of eventsToList["tasks"]){
-      taskObj = eventCreate(line);
-      if (Object.keys(taskObj).length !== 0) {
-        eventObj = {
-          'summary' : taskObj.summary,
-          'start' : taskObj.start,
-          'end' : taskObj.end
+  try {
+    let settings = await loadSavedSettings()
+    let eventsToList = await listEventsMarkdown(settings["markdown_path"]);
+    for (const task of eventsToList["tasks"]){
+      
+      validTaskObj = eventCheckValid(task);
+      if (Object.keys(validTaskObj).length == 0) continue;
+      for (const syncedObject of syncedObj["tasks"]){
+        if (validTaskObj.summary.localeCompare(syncedObject)){
+          syncedEvent = true;
+          break;
         }
-        let data = await calendar.events.insert(
-          {
-            auth: auth,
-            calendarId: 'primary',
-            resource: taskObj
-          },
-          (err, eventA) => {
-            if (err) {
-              console.error("Error in Calendar Service." + err)
-              console.error(err)
-              return
-            }
-          console.log('Event created: %s', eventA); 
-          }
-        )
-        return new Promise((res)=>{
-          Reject(data);
-        })
       }
-
+      if (syncedEvent) {
+        continue;
+      }
+      eventObj = {
+        'summary' : validTaskObj.summary,
+        'start' : validTaskObj.start,
+        'end' : validTaskObj.end
+      }
+      let data = await calendar.events.insert (
+        { auth: auth, calendarId: 'primary', resource: validTaskObj },
+        (err, eventA) => {
+          if (err) {
+            console.error("Error in Calendar Service." + err)
+            console.error(err)
+            return
+          }
+           
+      })
     }
-  })
-  .catch(err => {
-    console.error(err);
-    return new Promise((err)=>{
-      Reject(err);
+  } catch (error) {
+    console.error(error);
+    return new Promise((error)=>{
+      Reject(error);
     })
-  })
+  }
+
 }
+
+/** 
+ * API Responses
+*/
 
 app.use(express.json());
 
-app.use(express.urlencoded());
-
-app.get('/', (req, res) =>{
-  console.log("GET-APP, Received");
-})
-
-app.get('/listEvents', (req, res) => {
+app.get('/events/list/googleCalendar', (req, res) => {
   let error = {}
   authorize()
   .then(async (client) => {
-    var object = await listEventsGoogleC(client);
+    const object = await listEventsGoogleCalendar(client);
     res.writeHead(200, {"Content-Type": "application/json"});
     res.write(JSON.stringify(object), 'utf8', "Writing...");
     res.end();
   })
   .catch(err => {
     error = err
+    logger(req, res, error, isReveal, "");
     res.writeHead(404);
     res.end();
   });
-  logger(req, res, error, isReveal, "");
 });
 
-app.get('/MdToGcEvents', async (req, res) =>{
-  let error = {}
+app.get('/events/list/markdown', async (req, res) => {
+  await loadSavedSettings()
+  .then(async (settings) => {
+    const md_address = settings["markdown_path"];
+    return await listEventsMarkdown(md_address)
+  })
+  .then((object)=>{
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.write(JSON.stringify(object), 'utf8', "Writing...");
+    res.end();
+  }) 
+  .catch((err)=>{
+    let error = err
+    res.writeHead(404);
+    res.end();
+  })
+  logger(req,res,error,isReveal, "");
+});
+
+app.get('/events/sync', async (req, res) => {
+  let syncedObj = {"tasks": []}, err = {}, appResponse = "Syncing Tasks"
   authorize()
-  .then(async (client) =>{
-    let response = await eventPublishMdToGc(client);
-    console.log(response.body);
+  .then(async (auth) =>{
+    const desync = await eventGetDesync(auth, syncedObj)
+    console.log(desync)
+    for (const eventIdDesynced of desync["tasks"]){
+      console.log(eventIdDesynced)
+      eventDelete(auth, eventIdDesynced);
+    }
+    return auth
+  })
+  .then(async (auth) => {
+    let response = await eventPublishMdToGc(auth, syncedObj);
+    console.log(response);
     res.writeHead(200);
     res.end();
   })
-  .catch(err =>{
-    error = err
-    res.writeHead(404);
-    res.end()
+  .catch((error) => {
+    err = error
   })
-  logger(req, res, error, isReveal, "")
+  logger(req, res, err, isReveal, appResponse);
 })
 
-app.get('/loadSettings', async (req, res) => {
+app.get('/settings/load', async (req, res) => {
   var appResponse = "Loaded Settings"
   let error = {}
   await loadSavedSettings()
@@ -376,40 +451,50 @@ app.get('/loadSettings', async (req, res) => {
   logger(req, res, error, isReveal, appResponse);
 })
 
-app.get('/mdList', async (req, res) => {
-  await loadSavedSettings()
-  .then(async (settings) => {
-    const md_address = settings["markdown_path"];
-    await listEventsMarkdwn(md_address)
-    .then((object)=>{
-      res.writeHead(200, {"Content-Type": "application/json"});
-      res.write(JSON.stringify(object), 'utf8', "Writing...");
-      res.end();
-    })
-    .catch((err) => {
-      error = err
-      res.writeHead(404);
-      res.end();
-    })
-  })
-  .catch((err)=>{
-    error = err
-    res.writeHead(404);
+app.post('/settings/save', (req, res) =>{
+  let err = {}
+  let appResponse = "Saved Settings"
+  SaveSettings(req.body)
+  .then(() => { 
+    res.writeHead(200)
+    res.write(appResponse)
     res.end();
   })
-  logger(req,res,error,isReveal,"");
+  .catch((err)=>{
+    res.writeHead(500);
+    res.end()
+  })
+  logger(req, res, err, isReveal, appResponse);
+});
+
+app.post('/logIn',  async (req, res) => {
+  let appResponse = "Logged-In"
+  await loadSavedCredits()
+  .then(async (data) =>{
+    if (data){
+      res.writeHead(200)
+      res.write(appResponse)
+      res.end();
+    } 
+    return await authorize();
+  })
+  .then(() => {
+    res.writeHead(200);
+    res.write(appResponse);
+    res.end();
+  })
+  .catch((err) => {
+    res.writeHead(500);
+    res.end();
+  })
 })
 
-app.post('/saveSettings', (req, res) =>{
-  let appResponse = "Saved Settings"
-  SaveSettings(req.body);
+app.post('/logOut', async (req, res) => {
+  let appResponse = "Logged-Out"
+  await deauthorize();
   res.writeHead(200)
   res.write(appResponse)
   res.end();
   logger(req, res, "", isReveal, appResponse);
-});
-
-app.delete('/signOut', (req, res) => {
-
 })
 export default app;

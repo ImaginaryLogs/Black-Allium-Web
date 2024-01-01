@@ -20,11 +20,6 @@ server.listen(port, "localhost", () => {
 
 server.use('/app', app);
 
-server.use('/public', (req, res) => {
-
-  
-})
-
 server.use('/', (req, res) => {
   let parsedURL = url.parse(req.url, true);
   let path = parsedURL.path.replace(/^\/+|\/+$/g, "");
