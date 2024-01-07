@@ -1,0 +1,3 @@
+{
+    "ignore": ["./client/*", "server_settings.json"]
+}

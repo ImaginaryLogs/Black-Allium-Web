@@ -27,6 +27,20 @@
                 <ul>
                     <li><button class="pressable" id="bTheme"> Website Theme </button></li>
                     <li><button class="pressable" id="bList"> Calendar Tasks </button></li>
+                    <li>
+                        <div>
+                            <button class="pressable expandable_button"> Cal APIKey </button>
+                            <div class="expandable_panel">
+                                <div>
+                                    <form class="upload">
+                                        <label for="bPathText">Address:</label>
+                                        <input type="file" id="clientUpload" name="clientUpload" accept=".json" placeholder="Input markdown file address" required/>
+                                        <input type="submit"/>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
                     <li><button class="pressable" id="bMdList"> Markdown Tasks </button></li>
                     <li>
                         <div>
@@ -37,7 +51,7 @@
                                     <input type="text" id="bPathText"></input placeholder="Input markdown file address">
                                 </div>
                                 <div>
-                                    <button class="pressable" id="bPath">Submit</button>
+                                    <button class="pressable" id="bPath">Submit Address</button>
                                 </div>
                             </div>
                         </div>
