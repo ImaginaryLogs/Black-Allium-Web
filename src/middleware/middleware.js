@@ -1,6 +1,6 @@
 import { appError } from './appError.js';
+import { LOG_MIDDLEWARE } from '../config/settings.js';
 
-const LOG_MIDDLEWARE = true;
 const GREN = '\u001b[1;32m';
 const GOLD = '\u001b[1;33m';
 const BLUE = '\u001b[1;36m';
@@ -51,10 +51,13 @@ export const tryCatch = (controller) => async (req, res, next) => {
 export const errorHandler = (error, req, res, next) => {
 	let reqColor = getColor(req.method);
 
-	console.log(`${GOLD}${req.baseUrl} ${reqColor}${req.method} ${BLNK}${req.originalUrl}`);
-	console.log(`${REDS}${BRCOR}->ERR (${error.code}): ${BLNK} ${error.message}`);
-
-	if (LOG_MIDDLEWARE) console.error(error);
+	if (LOG_MIDDLEWARE) {
+		console.log(`${GOLD}${req.baseUrl} ${reqColor}${req.method} ${BLNK}${req.originalUrl}`);
+		console.log(`${REDS}${BRCOR}->ERR (${error.code}): ${BLNK} ${error.message}`);
+		console.error(error);
+	} else {
+		console.log(`${REDS}SERVER ERROR`);
+	}
 
 	if (error instanceof appError) {
 	}

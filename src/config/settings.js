@@ -4,6 +4,4 @@ export const DEBUG_API = false;
 
 export const LOG_INDEX = true;
 
-export const LOG_MIDDLEWARE = true;
-
-
+export const LOG_MIDDLEWARE = false;

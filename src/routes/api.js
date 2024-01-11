@@ -346,7 +346,7 @@ app.get(
 	tryCatch(async (req, res) => {
 		let syncedObj = { tasks: [] };
 		let err = {};
-		let API_MESSAGE = 'Syncing Tasks';
+		const API_MESSAGE = 'Syncing Tasks';
 
 		const auth = await authorize();
 		const desync = await eventGetDesync(auth, syncedObj);
@@ -386,7 +386,7 @@ app.get(
 app.post(
 	'/settings/save',
 	tryCatch(async (req, res) => {
-		let API_MESSAGE = 'Saved Settings';
+		const API_MESSAGE = 'Saved Settings';
 		await SaveSettings(req.body);
 		res.status(200).send(API_MESSAGE);
 
@@ -397,7 +397,7 @@ app.post(
 app.get(
 	'/log-in',
 	tryCatch(async (req, res) => {
-		let API_MESSAGE = 'Logged-In';
+		const API_MESSAGE = 'Logged-In';
 		let credits = await loadSavedCredits();
 		if (credits.data) return res.status(200).send(API_MESSAGE);
 		credits = authorize();
@@ -410,7 +410,7 @@ app.get(
 app.post(
 	'/log-out',
 	tryCatch(async (req, res) => {
-		let API_MESSAGE = 'Logged-Out';
+		const API_MESSAGE = 'Logged-Out';
 		await deauthorize();
 		res.status(200).send(API_MESSAGE);
 		logApp(req, res, LOG_API, API_MESSAGE);
