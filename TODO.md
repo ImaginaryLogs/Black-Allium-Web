@@ -5,5 +5,9 @@
 
 # DIAGRAM
 User 1 ->\
-User 2 ->>== URL params ==> Server
+User 2 ->>== URL params == TOKENS ==> Server ==> MONGODB or MYSQL
 USer 3 ->/
+
+# commands:
+
+nodemon --config src/config/nodemon.json src/index.js

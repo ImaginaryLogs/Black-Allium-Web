@@ -1,3 +1,3 @@
-/lib/client/token.json
-/lib/client/client_secrets.json
+/src/client/token.json
+/src/client/client_secrets.json
 /db/*

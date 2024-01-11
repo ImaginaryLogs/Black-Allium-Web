@@ -5,4 +5,7 @@ export class appError extends Error {
 		this.statusCode = statusCode;
 	}
 }
-export const INVALID_ADDRESS = 600;
+
+export const INVALID_ADDRESS = 601;
+export const INVALID_LOGIN = 602;
+

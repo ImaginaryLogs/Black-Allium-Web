@@ -5,19 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackhawk</title>
     <link rel = "icon" type= "image/x-icon" href="../images/canary.png">
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="/public/css/styles.css">
     <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
-    <script type="module" src="../app/webHandler.js"></script>
+    <script type="module" src="/app/webHandler.js"></script>
 </head>
 <body>
-    <div id="navbar">
+    <navbar id="navbar">
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="apply.html">Apply</a></li>
+            <li><a href="/public/pages/index.html">Home</a></li>
+            <li><a href="/public/pages/apply.html">Apply</a></li>
             <li><a class="active" href="install.html">Install</a></li>
-            <li><a href="about.html">About</a></li>
+            <li><a href="/public/pages/about.html">About</a></li>
         </ul>
-    </div>
+    </navbar>
     
     <div class="content">
         <p>Installing this plugin requires some leg-work with Google Workspace. Go through the tutorial on how to enabling APIs for Node.js in <a href="https://developers.google.com/calendar/api/quickstart/nodejs">this link</a>. Then, once you dowload the API key JSON file, it should be pasted in ./lib/client and renamed as client_secrets.</p>

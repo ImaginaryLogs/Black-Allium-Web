@@ -1,0 +1,7 @@
+{
+  "ignore": ["./client/*", "/db/*", "./src/config/*"],
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon --config src/config/nodemon.json src/index.js"
+  }
+}
