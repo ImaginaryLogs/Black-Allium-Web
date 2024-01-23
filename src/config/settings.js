@@ -1,7 +1,11 @@
-export const LOG_API = true;
+export var LOG_API = true;
 
-export const DEBUG_API = false;
+export var DEBUG_API = false;
 
-export const LOG_INDEX = true;
+export var LOG_DB = true;
 
-export const LOG_MIDDLEWARE = false;
+export var DEBUG_DB = false;
+
+export var LOG_INDEX = true;
+
+export var LOG_MIDDLEWARE = true;

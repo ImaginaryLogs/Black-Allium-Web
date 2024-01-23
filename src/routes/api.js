@@ -7,17 +7,20 @@ import * as path from 'node:path'; //  File Path module
 import * as process from 'node:process'; //  Process is a native Node.js module that provides info and control over current process.
 import * as readline from 'node:readline';
 
-import { errorHandler, logApp, prowrap, tryCatch } from '../middleware/middleware.js';
+import { errorHandler, logApp, result, tries } from '../middleware/middleware.js';
 import { DEBUG_API } from '../config/settings.js';
 import { LOG_API } from '../config/settings.js';
+import { ApiError } from '../middleware/apiError.js';
+import { NO_INTERNET_ACCESS } from '../config/errorCodes.js';
 
 const urlScope = ['https://www.googleapis.com/auth/calendar'];
-const pathClient = path.join(process.cwd(), 'src//client');
+const pathClient = path.join(process.cwd(), 'src/client');
 const pathCredit = path.join(pathClient, 'client_secrets.json');
 const pathSetins = path.join(pathClient, 'client_settings.json');
 const pathTOKENS = path.join(pathClient, 'token.json'); // Token is a generated id that automatically does authentication.
 const pathDATABS = path.join(path.dirname(process.cwd()), 'db');
 const regDateYMD = /^\d{4}-\d{2}-\d{2}$/;
+
 const app = express.Router();
 
 class taskEvents {
@@ -38,6 +41,14 @@ class taskEvents {
 			timeZone: 'Asia/Manila',
 		};
 	}
+
+	JSONdetails() {
+		return {
+			summary: this.summary,
+			start: this.start,
+			end: this.end,
+		};
+	}
 }
 
 const loadSavedSettings = async () => {
@@ -52,15 +63,15 @@ const loadSavedSettings = async () => {
 
 const SaveSettings = async (newInfo) => {
 	let payloadSettings = {};
-	payloadSettings = await prowrap(loadSavedSettings());
-	if (payloadSettings.error) {
+	payloadSettings = await result(loadSavedSettings());
+	if (payloadSettings.ok) {
+		payloadSettings = payloadSettings.data;
+		for (const updatedKey of Object.keys(newInfo)) payloadSettings[updatedKey] = newInfo[updatedKey];
+	} else {
 		payloadSettings = {
 			markdown_path: '',
 			web: { '--bg': '#080808', '--text': 'white' },
 		};
-	} else {
-		payloadSettings = payloadSettings.data;
-		for (const updatedKey of Object.keys(newInfo)) payloadSettings[updatedKey] = newInfo[updatedKey];
 	}
 	await fsp.writeFile(pathSetins, JSON.stringify(payloadSettings), 'utf-8', (err) => {
 		if (err) throw err;
@@ -158,58 +169,56 @@ const listEventsGoogleCalendar = async (auth) => {
 
 const isValidDate = (dateString) => {
 	if (!dateString.match(regDateYMD)) return false;
+
 	let date = new Date(dateString);
 	let dNum = date.getTime();
+
 	if (!dNum && dNum !== 0) return false; // NaN value, Invalid date
+
 	return date.toISOString().slice(0, 10) === dateString;
 };
 
-const eventCheckValid = (eventString) => {
+const createValidEvent = (eventString) => {
 	const emojiDates = { start: '🛫', end: '📅', sched: '⏳', Done: '✅' };
-	let index;
-	let validData = {};
-	let minDate = eventString.length;
-	let hasDate = false;
-
-	let criteria = {
-		start: {
-			index: eventString.indexOf(emojiDates.start),
-			dateYMD: '',
-		},
-		end: {
-			index: eventString.indexOf(emojiDates.end),
-			dateYMD: '',
-		},
-		sched: {
-			index: eventString.indexOf(emojiDates.sched),
-			dateYMD: '',
-		},
-		done: {
-			index: eventString.indexOf(emojiDates.Done),
-			dateYMD: '',
-		},
+	const dateDetails = (taskString = '', emojiType) => {
+		return { index: taskString.indexOf(emojiDates[emojiType]), dateYMD: '' };
 	};
+
+	let index;
+	let dateYMD;
+	let minDate = eventString.length;
+	let hasNoDateDetails = true;
+	let criteria = {
+		start: dateDetails(eventString, 'start'),
+		end: dateDetails(eventString, 'end'),
+		sched: dateDetails(eventString, 'sched'),
+		done: dateDetails(eventString, 'done'),
+	};
+
 	for (const [dateType, dateObject] of Object.entries(criteria)) {
 		index = dateObject.index;
 		if (index == -1) continue;
-		hasDate = true;
-		let dateYMD = eventString
+		hasNoDateDetails = false;
+		dateYMD = eventString
 			.substring(index)
 			.substring(2, 13)
 			.replace(/^\s+|\s+$/gm, '');
-		minDate = index < minDate ? index : minDate;
+		minDate = Math.min(index, minDate);
 		dateObject['dateYMD'] = dateYMD;
 	}
 
 	let utcNow = new Date();
-	const isOutdated = new Date(criteria['end']['dateYMD']).getTime() < utcNow.getTime();
-	const isValidDate = !hasDate || criteria['done']['index'] != -1 || isOutdated;
+	const isEventOutdated = new Date(criteria['end']['dateYMD']).getTime() < utcNow.getTime();
+	const hasDoneDate = criteria['done']['index'] != -1;
+	const eventIsDone = hasNoDateDetails || hasDoneDate || isEventOutdated;
 
-	if (isValidDate) return {};
+	if (eventIsDone) return {};
 
 	const summary = eventString.substring(0, minDate).replace(/^\s+|\s+$/gm, '');
 	const hasStartDate = criteria['start']['index'] != -1;
 	const hasEndDate = criteria['end']['index'] != -1;
+	let validData = {};
+
 	if (hasStartDate || hasEndDate)
 		validData = new taskEvents(summary, criteria['start']['dateYMD'], criteria['end']['dateYMD']);
 	return validData;
@@ -227,27 +236,29 @@ const eventGetDesync = async (auth, syncedObj) => {
 	const requestedEvents = await listEventsMarkdown(user_settings['markdown_path']);
 	const publishedEvents = await listEventsGoogleCalendar(auth);
 
+	const checkRequestIsFulfilled = (requestedEvent, publishedEvent) => {
+		requestedEvent = createValidEvent(requestedEvent);
+		hasNoKeys = Object.keys(requestedEvent).length == 0;
+		hasSameSummary = publishedEvent['event'].localeCompare(requestedEvent.summary);
+
+		if (hasNoKeys || hasSameSummary) return true;
+
+		isEventSync = true;
+		syncedObj['tasks'].push(publishedEvent['event'].slice('OBS: '.length));
+		return false;
+	};
+
 	for (const publishedEvent of publishedEvents['events']) {
 		isEventSync = false;
 
 		if (!publishedEvent['event'].startsWith('OBS:')) continue;
 
-		for (let requestedEvent of requestedEvents['tasks']) {
-			requestedEvent = eventCheckValid(requestedEvent);
-
-			hasNoKeys = Object.keys(requestedEvent).length == 0;
-			isMatched = requestedEvent.hasOwnProperty('matched');
-			hasSameSummary = publishedEvent['event'].localeCompare(requestedEvent.summary);
-
-			if (hasNoKeys || isMatched || hasSameSummary) continue;
-
-			isEventSync = true;
-			syncedObj['tasks'].push(publishedEvent['event'].slice('OBS: '.length));
-			requestedEvent['matched'] = true;
-		}
+		for (let requestedEvent of requestedEvents['tasks'])
+			if (checkRequestIsFulfilled(requestedEvent, publishedEvent)) continue;
 
 		if (!isEventSync) eventsDesync['tasks'].push(publishedEvent['id']);
 	}
+
 	return eventsDesync;
 };
 
@@ -267,46 +278,48 @@ const listEventsMarkdown = async (address) => {
 	return payload;
 };
 
-const eventPublishMdToGc = async (auth, syncedObj) => {
-	let validTaskObj = {};
+const eventPublishMdToGc = async (auth, syncedTasks) => {
 	let publishedEvents = { events: [] };
 	let syncedEvent = false;
 	let data = {};
-	console.log('Synced Objects:');
-	console.log(syncedObj);
+	let validTaskObj = {};
+	let insertResponse;
 	const calendar = google.calendar({ version: 'v3', auth });
+
+	const calendartInsertReq = (authentication, taskToInsert) => {
+		return {
+			auth: authentication,
+			calendarId: 'primary',
+			resource: taskToInsert.JSONdetails,
+		};
+	};
+	console.log('Synced Objects:');
+	console.log(syncedTasks);
 
 	let settings = await loadSavedSettings();
 	let eventsToList = await listEventsMarkdown(settings['markdown_path']);
 	for (const task of eventsToList['tasks']) {
 		syncedEvent = false;
-		validTaskObj = eventCheckValid(task);
-		if (validTaskObj === null || Object.keys(validTaskObj).length == 0) continue;
-		for (const syncedObject of syncedObj['tasks']) {
-			console.log(`${syncedObject} vs ${validTaskObj.summary}`);
+		validTaskObj = createValidEvent(task);
+
+		if (validTaskObj === null) continue;
+
+		for (const syncedObject of syncedTasks['tasks']) {
 			if (!validTaskObj.summary.includes(syncedObject)) continue;
 			syncedEvent = true;
-			console.log('Synced: ' + validTaskObj.summary);
 			break;
 		}
+
 		if (syncedEvent) continue;
-		console.log('valid');
+
 		console.log(validTaskObj);
-		data = {
-			auth: auth,
-			calendarId: 'primary',
-			resource: {
-				summary: validTaskObj.summary,
-				start: validTaskObj.start,
-				end: validTaskObj.end,
-			},
-		};
-		await prowrap(
-			calendar.events.insert(data, (err, eventA) => {
-				if (err) throw err;
-			})
-		);
-		publishedEvents['events'].push(eventObj);
+		data = calendartInsertReq(auth, validTaskObj);
+
+		await calendar.events.insert(data, (err, eventA) => {
+			if (err) throw err;
+		});
+
+		publishedEvents['events'].push(validTaskObj);
 	}
 	return publishedEvents;
 };
@@ -315,13 +328,17 @@ app.use(express.json());
 
 app.get(
 	'/events/list/googleCalendar',
-	tryCatch(async (req, res) => {
-		let error = {};
-		const client = await authorize();
-		const events = await listEventsGoogleCalendar(client);
+	tries(async (req, res) => {
+		const client = await result(authorize());
+
+		if (!client.ok) throw new ApiError(NO_INTERNET_ACCESS, 'No internet access', 400, client.err);
+
+		const events = await result(listEventsGoogleCalendar(client.data));
+
+		if (!events.ok) throw new ApiError(NO_INTERNET_ACCESS, 'No internet access', 400, events.err);
 
 		res.writeHead(200, { 'Content-Type': 'application/json' });
-		res.write(JSON.stringify(events), 'utf8', 'Writing...');
+		res.write(JSON.stringify(events.data), 'utf8', 'Writing...');
 		res.end();
 		logApp(req, res, LOG_API);
 	})
@@ -329,7 +346,7 @@ app.get(
 
 app.get(
 	'/events/list/markdown',
-	tryCatch(async (req, res) => {
+	tries(async (req, res) => {
 		const settings = await loadSavedSettings();
 		const md_address = settings['markdown_path'];
 		const events = await listEventsMarkdown(md_address);
@@ -343,9 +360,8 @@ app.get(
 
 app.get(
 	'/events/sync',
-	tryCatch(async (req, res) => {
+	tries(async (req, res) => {
 		let syncedObj = { tasks: [] };
-		let err = {};
 		const API_MESSAGE = 'Syncing Tasks';
 
 		const auth = await authorize();
@@ -366,16 +382,16 @@ app.get(
 
 app.get(
 	'/settings/load',
-	tryCatch(async (req, res) => {
+	tries(async (req, res) => {
 		const API_MESSAGE = 'Saved Settings';
-		const settings = await prowrap(loadSavedSettings());
+		const settings = await result(loadSavedSettings());
 
-		if (settings.error || settings.data === undefined) {
+		if (settings.err || settings.data === undefined) {
 			await SaveSettings();
-			settings = await prowrap(loadSavedSettings());
+			settings = await result(loadSavedSettings());
 		}
 
-		if (settings.error) throw settings.error;
+		if (settings.err) throw settings.err;
 		res.writeHead(200, { 'Content-Type': 'application/json' });
 		res.write(JSON.stringify(settings.data), 'utf8', 'Writing...');
 		res.end();
@@ -385,7 +401,7 @@ app.get(
 
 app.post(
 	'/settings/save',
-	tryCatch(async (req, res) => {
+	tries(async (req, res) => {
 		const API_MESSAGE = 'Saved Settings';
 		await SaveSettings(req.body);
 		res.status(200).send(API_MESSAGE);
@@ -396,12 +412,16 @@ app.post(
 
 app.get(
 	'/log-in',
-	tryCatch(async (req, res) => {
+	tries(async (req, res) => {
 		const API_MESSAGE = 'Logged-In';
 		let credits = await loadSavedCredits();
-		if (credits.data) return res.status(200).send(API_MESSAGE);
+		if (credits.ok){
+			res.set('Set-Cookie', 'session')
+			res.status(200).send(API_MESSAGE);
+			return;
+		}
 		credits = authorize();
-		if (credits.error) throw error;
+		if (credits.err) throw credits.err;
 
 		logApp(req, res, LOG_API, API_MESSAGE);
 	})
@@ -409,7 +429,7 @@ app.get(
 
 app.post(
 	'/log-out',
-	tryCatch(async (req, res) => {
+	tries(async (req, res) => {
 		const API_MESSAGE = 'Logged-Out';
 		await deauthorize();
 		res.status(200).send(API_MESSAGE);
@@ -419,7 +439,7 @@ app.post(
 
 app.post(
 	'/client/save',
-	tryCatch(async (req, res) => {
+	tries(async (req, res) => {
 		console.log(req.url);
 		const url = new URLSearchParams(req.url);
 		const fileName = url.get('/client/save?filename');

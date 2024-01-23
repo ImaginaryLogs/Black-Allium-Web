@@ -1,46 +1,41 @@
-import { appError } from './appError.js';
-import { LOG_MIDDLEWARE } from '../config/settings.js';
+import { ApiError } from './apiError.js';
+import { DEBUG_API, LOG_MIDDLEWARE } from '../config/settings.js';
 
+/**
+ * Colors for debugging and logging events in the server.
+ */
 const GREN = '\u001b[1;32m';
 const GOLD = '\u001b[1;33m';
 const BLUE = '\u001b[1;36m';
 const REDS = '\u001b[1;31m';
 const BLNK = '\u001b[0;15m';
 const BRCOR = '\u2514';
-
-const getColor = (method) => {
-	switch (method) {
-		case 'GET':
-			return GREN;
-		case 'POST':
-			return BLUE;
-		case 'PUT':
-			return GOLD;
-		case 'DELETE':
-			return REDS;
-		default:
-			return BLNK;
-	}
+const COLORS = {
+	GREN: GREN,
+	GOLD: GOLD,
+	BLUE: BLUE,
+	REDS: REDS,
 };
 
-export function logApp(req, res, isReveal, customMessage = '') {
+const getColors = (option) => ({ COLORS }[option] ?? BLNK);
+
+export function logApp(req, res, isReveal, customMessage = null) {
 	if (!isReveal) return;
 	const reqMethod = req.method;
-	const reqColor = getColor(reqMethod);
+	const reqColor = getColors(reqMethod);
 	const baseURL = req.baseUrl == '' ? '/pub' : req.baseUrl;
-	customMessage = customMessage != '' ? customMessage : req.path.substr(req.path.lastIndexOf('/') + 1);
+	customMessage = customMessage ?? req.path.substr(req.path.lastIndexOf('/') + 1);
 
 	console.log(`${GOLD}${baseURL} ${reqColor}${reqMethod} ${BLNK}${req.originalUrl}`);
 
 	if (reqMethod == 'POST') {
-		console.log(`\u001b[0;33m ${BRCOR}->REQ: \u001b[0;15m`);
+		console.log(`${GOLD}${BRCOR}->REQ:${BLNK}===============|`);
 		console.table(req.body);
 	}
-
-	console.log(`\u001b[0;32m ${BRCOR}->RES:\u001b[0;15m ${customMessage}`);
+	console.log(`${GREN}${BRCOR}->RES: ${BLNK}${customMessage}`);
 }
 
-export const tryCatch = (controller) => async (req, res, next) => {
+export const tries = (controller) => async (req, res, next) => {
 	try {
 		await controller(req, res);
 	} catch (error) {
@@ -49,17 +44,20 @@ export const tryCatch = (controller) => async (req, res, next) => {
 };
 
 export const errorHandler = (error, req, res, next) => {
-	let reqColor = getColor(req.method);
+	let reqColor = getColors(req.method);
 
 	if (LOG_MIDDLEWARE) {
 		console.log(`${GOLD}${req.baseUrl} ${reqColor}${req.method} ${BLNK}${req.originalUrl}`);
 		console.log(`${REDS}${BRCOR}->ERR (${error.code}): ${BLNK} ${error.message}`);
-		console.error(error);
 	} else {
-		console.log(`${REDS}SERVER ERROR`);
+		console.log(`${REDS}SERVER ERROR${BLNK}`);
 	}
 
-	if (error instanceof appError) {
+	if (error instanceof ApiError) {
+		if (DEBUG_API) console.table(error.origin);
+		return res.status(error.status).json({
+			errorCode: error.code,
+		});
 	}
 
 	switch (error.code) {
@@ -68,19 +66,44 @@ export const errorHandler = (error, req, res, next) => {
 		case 'ENOENT':
 			return res.status(400).send('Bad input address');
 	}
+
 	return res.status(500).send(error.message);
 };
 
-export async function prowrap(promise, isLogging = false) {
+export const result = async (promise, isLogging = false) => {
 	try {
 		const result = await Promise.allSettled([promise]);
 		if (result.find((res) => res.status === 'fulfilled'))
-			return { data: result.find((res) => res.status === 'fulfilled')?.value, error: null };
+			return { ok: true, data: result.find((res) => res.status === 'fulfilled')?.value, err: null };
 		const error = result.find((res) => res.status === 'rejected')?.reason;
 		if (isLogging) console.log(result);
-		return { data: null, error: error };
+		return { ok: false, data: null, err: error };
 	} catch (error) {
 		if (isLogging) console.log(error);
-		return { data: null, error: error };
+		return { ok: false, data: null, err: error };
 	}
-}
+};
+
+export const filesend = async (file, url) => {
+	const fileReader = new FileReader();
+	const uploader = async (event) => {
+		const fileContent = event.target.result;
+		const CHUNK_SIZE = 8000; //Kilobytes
+		const totalChunks = fileContent.byteLength / CHUNK_SIZE;
+		let DATACHUNK, response;
+		for (let chunk = 0; chunk < totalChunks + 1; chunk++) {
+			DATACHUNK = fileContent.slice(chunk * CHUNK_SIZE, (chunk + 1) * CHUNK_SIZE);
+			response = {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/octet-stream',
+					'content-length': DATACHUNK.length,
+				},
+				body: DATACHUNK,
+			};
+			await fetch(url + '?filename=' + file.name, response);
+		}
+	};
+	fileReader.readAsArrayBuffer(file);
+	fileReader.onload = uploader;
+};

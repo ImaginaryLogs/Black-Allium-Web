@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-signin-client_id" content="105157164907-ag2q5ts6pde8pu2a93a4uskcn3pc9c05.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <title>Blackhawk</title>
+    <link rel = "icon" type= "image/x-icon" href="../images/canary.png">
+    <link rel="stylesheet" href="/public/css/styles.css">
+    <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+    <script type="module" src="/app/website.js"></script>
+</head>
+<body>
+    <navbar id="navbar">
+        <ul>
+            <li><a href="/public/pages/index.html">Home</a></li>
+            <li><a href="/public/pages/apply.html">Apply</a></li>
+            <li><a href="install.html">Install</a></li>
+            <li><a href="/public/pages/about.html">About</a></li>
+            <li><a class="active" href="/public/pages/login.html">Login</a></li>
+        </ul>
+    </navbar>
+    
+    <div class="content">
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    </div>
+
+    <script>
+        function onSignIn (googleUser) {
+            var id_token = googleUser.getAuthResponse().id_token;
+            // console.log(id_token);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/login');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onload = function () {
+                console.log('Signed in as: ' + xhr.responseText);
+                if (xhr.responseText == 'success') {
+                    signOut();
+                    location.assign('/profile');
+                }
+            };
+            xhr.send(JSON.stringify({ token: id_token }));
+        };
+
+        function signOut () {
+            var auth2 = gapi.auth2.getAuthInstance();
+            auth2.signOut().then(function () {
+                console.log('User signed out.');
+            });
+        };
+    </script>
+
+    <footer>
+        <a href="https://www.flaticon.com/free-icons/canary" title="Canary icons">Canary icons created by Freepik - Flaticon</a>
+    </footer>
+    <div id="loading""></div>
+    </body>
+</html>
