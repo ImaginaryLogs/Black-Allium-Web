@@ -49,6 +49,7 @@ export const errorHandler = (error, req, res, next) => {
 	if (LOG_MIDDLEWARE) {
 		console.log(`${GOLD}${req.baseUrl} ${reqColor}${req.method} ${BLNK}${req.originalUrl}`);
 		console.log(`${REDS}${BRCOR}->ERR (${error.code}): ${BLNK} ${error.message}`);
+		console.error(error);
 	} else {
 		console.log(`${REDS}SERVER ERROR${BLNK}`);
 	}

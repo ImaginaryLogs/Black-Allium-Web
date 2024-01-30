@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-signin-client_id" content="105157164907-ag2q5ts6pde8pu2a93a4uskcn3pc9c05.apps.googleusercontent.com">
     <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="105157164907-l56i0u1kfeia373oruaiejr4t5tlpomu.apps.googleusercontent.com">
+    
     <title>Blackhawk</title>
     <link rel = "icon" type= "image/x-icon" href="../images/canary.png">
     <link rel="stylesheet" href="/public/css/styles.css">
@@ -23,34 +24,10 @@
     </navbar>
     
     <div class="content">
-        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        <h1>Sign-in:</h1>
+        <div class="g_id_onload" data-client_id="105157164907-l56i0u1kfeia373oruaiejr4t5tlpomu.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
+        <div class="g_id_signin" data-type="standard"></div>
     </div>
-
-    <script>
-        function onSignIn (googleUser) {
-            var id_token = googleUser.getAuthResponse().id_token;
-            // console.log(id_token);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/login');
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.onload = function () {
-                console.log('Signed in as: ' + xhr.responseText);
-                if (xhr.responseText == 'success') {
-                    signOut();
-                    location.assign('/profile');
-                }
-            };
-            xhr.send(JSON.stringify({ token: id_token }));
-        };
-
-        function signOut () {
-            var auth2 = gapi.auth2.getAuthInstance();
-            auth2.signOut().then(function () {
-                console.log('User signed out.');
-            });
-        };
-    </script>
 
     <footer>
         <a href="https://www.flaticon.com/free-icons/canary" title="Canary icons">Canary icons created by Freepik - Flaticon</a>

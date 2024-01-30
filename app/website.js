@@ -4,83 +4,41 @@ var cssProps = document.querySelector(':root');
 var screenList = document.getElementById('screenList');
 var isDarkMode = true;
 
-const main = () => {
-	const ctrlButtons = {
-		bTheme: [apiUpdateWebTheme, {}],
-		bList: [apiListGoogleCalendar, {}],
-		bPath: [apiInputTaskFile, {}],
-		bMdList: [apiListMarkdown, {}],
-		bAddEvents: [apiEventsSync, {}],
-	};
 
-	Object.entries(ctrlButtons).forEach(([buttonName, value]) => {
-		value[1] = document.getElementById(buttonName);
-		if (value[1] != null) value[1].onclick = value[0];
-	});
 
-	const buttonsValid = document.getElementsByClassName('pressable');
-	const clickSound = new Audio('../sounds/buttonClick.mp3');
-	for (const button of buttonsValid) {
-		console.log(button);
-		button.addEventListener('click', () => {
-			clickSound.play();
-		});
-	}
 
-	const forms = document.getElementsByTagName('form');
-	for (const form of forms)
-		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
-			console.log(e.target.clientUpload);
-			let file = e.target.clientUpload.files[0];
-			filesend(file, `/api/client/save`);
-		});
 
-	const buttonsExpandable = document.getElementsByClassName('expandable_button');
-	if (buttonsExpandable) {
-		for (const expandableButton of buttonsExpandable)
-			expandableButton.addEventListener('click', function () {
-				this.classList.toggle('active');
-				var content = this.nextElementSibling;
-				if (content.style.maxHeight) {
-					content.style.maxHeight = null;
-					this.parentNode.classList.remove('active_panel');
-				} else {
-					content.style.maxHeight = content.scrollHeight + 'px';
-					this.parentNode.classList.add('active_panel');
-				}
-			});
-	}
 
-	window.onscroll = stickyDetection();
 
-	window.addEventListener('load', async () => {
-		let settings_response = await result(fetch('/api/settings/load'));
 
-		if (settings_response.error) {
-			await apiUpdateWebTheme();
-			settings_response = await result(fetch('/api/settings/load'));
-		}
 
-		if (settings_response.error) throw settings_response.error;
 
-		console.log(settings_response.data);
-		const data = await settings_response.data.json();
-		console.log('Loaded');
-		console.log(data);
-		cssProps.style.setProperty('--bg', data.web['--bg']);
-		cssProps.style.setProperty('--text', data.web['--text']);
-		cssProps.style.getPropertyValue('--bg');
-		isDarkMode = data.web['--text'] == 'white' ? false : true;
-		const loading_screen = document.getElementById('loading');
-		if (loading_screen != null) {
-			loading_screen.classList.add('transparent');
-			setTimeout(() => {
-				loading_screen.classList.add('hidden');
-			}, 250);
-		}
-	});
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const stickyDetection = () => {
 	const navbarYPos = document.getElementById('navbar')?.offsetTop;
@@ -264,7 +222,6 @@ const apiClientSecrets = async () => {
 	idleStatus();
 	console.log(response);
 };
-
 // utils
 const filesend = async (file, url) => {
 	const fileReader = new FileReader();
@@ -319,4 +276,80 @@ const result = async (promise, isLogging = false) => {
 	}
 };
 
-main();
+{
+const ctrlButtons = {
+	bTheme: [apiUpdateWebTheme, {}],
+	bList: [apiListGoogleCalendar, {}],
+	bPath: [apiInputTaskFile, {}],
+	bMdList: [apiListMarkdown, {}],
+	bAddEvents: [apiEventsSync, {}],
+};
+
+Object.entries(ctrlButtons).forEach(([buttonName, value]) => {
+	value[1] = document.getElementById(buttonName);
+	if (value[1] != null) value[1].onclick = value[0];
+});
+
+const buttonsValid = document.getElementsByClassName('pressable');
+const clickSound = new Audio('../sounds/buttonClick.mp3');
+for (const button of buttonsValid) {
+	console.log(button);
+	button.addEventListener('click', () => {
+		clickSound.play();
+	});
+}
+
+const forms = document.getElementsByTagName('form');
+for (const form of forms)
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		console.log(e.target.clientUpload);
+		let file = e.target.clientUpload.files[0];
+		filesend(file, `/api/client/save`);
+	});
+
+const buttonsExpandable = document.getElementsByClassName('expandable_button');
+if (buttonsExpandable) {
+	for (const expandableButton of buttonsExpandable)
+		expandableButton.addEventListener('click', function () {
+			this.classList.toggle('active');
+			var content = this.nextElementSibling;
+			if (content.style.maxHeight) {
+				content.style.maxHeight = null;
+				this.parentNode.classList.remove('active_panel');
+			} else {
+				content.style.maxHeight = content.scrollHeight + 'px';
+				this.parentNode.classList.add('active_panel');
+			}
+		});
+}
+
+window.onscroll = stickyDetection();
+
+window.addEventListener('load', async () => {
+	let settings_response = await result(fetch('/api/settings/load'));
+
+	if (settings_response.error) {
+		await apiUpdateWebTheme();
+		settings_response = await result(fetch('/api/settings/load'));
+	}
+
+	if (settings_response.error) throw settings_response.error;
+
+	console.log(settings_response.data);
+	const data = await settings_response.data.json();
+	console.log('Loaded');
+	console.log(data);
+	cssProps.style.setProperty('--bg', data.web['--bg']);
+	cssProps.style.setProperty('--text', data.web['--text']);
+	cssProps.style.getPropertyValue('--bg');
+	isDarkMode = data.web['--text'] == 'white' ? false : true;
+	const loading_screen = document.getElementById('loading');
+	if (loading_screen != null) {
+		loading_screen.classList.add('transparent');
+		setTimeout(() => {
+			loading_screen.classList.add('hidden');
+		}, 250);
+	}
+});
+}

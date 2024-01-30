@@ -10,4 +10,4 @@ USer 3 ->/
 
 # commands:
 
-nodemon --config src/config/nodemon.json src/index.js
+nodemon --config src/config/nodemon.json src/index2.js
