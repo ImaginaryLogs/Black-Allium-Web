@@ -1,5 +1,5 @@
-import { ApiError } from './apiError.js';
 import { DEBUG_API, LOG_MIDDLEWARE } from '../config/settings.js';
+import { ApiError } from './apiError.js';
 
 /**
  * Colors for debugging and logging events in the server.

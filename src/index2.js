@@ -75,9 +75,8 @@ server.get("/google/redirect", tries(async (req, res) =>{
 
 server.get('/schedule_event', tries(async (req, res)=>{
     var credentials = {}
-	for(const cookieName of cookieNames){
-		if (cookieName == "expiry_date")
-		{
+	for(const cookieName of cookieNames) {
+		if (cookieName == "expiry_date") 	{
 			credentials[cookieName] = Number(req.cookies[cookieName])
 			continue;
 		}
@@ -88,11 +87,11 @@ server.get('/schedule_event', tries(async (req, res)=>{
     const calendar = google.calendar({ version: 'v3', auth: OAuth2Client });
 
 	var response = await calendar.events.list({
-		calendarId: 'primary',
-		timeMin: new Date().toISOString(),
-		maxResults: 100,
-		singleEvents: true,
-		orderBy: 'startTime',
+		calendarId		: 'primary',
+		timeMin			: new Date().toISOString(),
+		maxResults		: 100,
+		singleEvents	: true,
+		orderBy			: 'startTime',
 	})
     
 	const receivedData = response.data.items;
@@ -122,12 +121,6 @@ server.get('/schedule_event', tries(async (req, res)=>{
 	res.write(JSON.stringify(data), 'utf8', 'Writing...');
 	res.end();
 }))
-
-
-
-
-
-
 
 
 
