@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Allium</title>
+    <link rel = "icon" type= "image/x-icon" href="/public/images/canary.png">
+    <link rel = "stylesheet" href="/public/css/styles.css">
+    <link href = 'https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+    <link href = 'https://fonts.googleapis.com/css?family=Fira Code' rel='stylesheet'>
+    <script type="module" src = "/public/js/website.mjs"></script>
+</head>
+<body>
+    <navbar id="navbar">
+        <ul>
+            <li><a href="/public/pages/index.html">Home</a></li>
+            <li><a class="active" href="/public/pages/apply.html">Apply</a></li>
+            <li><a href="/public/pages/install.html">Install</a></li>
+            <li><a href="/public/pages/about.html">About</a></li>
+            <li><a href="/public/pages/login.html">Login</a></li>
+        </ul>
+    </navbar>
+    
+    <div class="content">
+        <div id="app">
+            <div id="control-panel">
+                <h1>Controls:</h1>
+                <ul>
+                    <li><button class="pressable" id="bLogin">Log in</button></li>
+                    <li><button class="pressable" id="bTheme"> Website Theme </button></li>
+                    <li><button class="pressable" id="bList"> Calendar Tasks </button></li>
+                    <li>
+                        <div>
+                            <button class="pressable expandable_button"> Cal APIKey </button>
+                            <div class="expandable_panel">
+                                <div>
+                                    <form class="upload">
+                                        <label for="bPathText">Address:</label>
+                                        <input type="file" id="clientUpload" name="clientUpload" accept=".json" placeholder="Input markdown file address" required/>
+                                        <input type="submit"/>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li><button class="pressable" id="bMdList"> Markdown Tasks </button></li>
+                    <li>
+                        <div>
+                            <button class="pressable expandable_button"> Markdown Path </button>
+                            <div class="expandable_panel">
+                                <div>
+                                    <label for="bPathText">Address:</label>
+                                    <input type="text" id="bPathText"></input placeholder="Input markdown file address">
+                                </div>
+                                <div>
+                                    <button class="pressable" id="bPath">Submit Address</button>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <button class="pressable" id="bAddEvents"> Sync Tasks </button>
+                    </li>
+                </ul>
+            </div>
+            <div id="screen">
+                <div id="statusPanel">
+                    <p id="statusSign"><b>Status:</b> Idle</p>
+                    <div class="loading_bar hidden">
+                        <div class="loading_bar_animation">
+                            <div>
+                                <div>
+                                    <div></div>
+                                </div>
+                                <div>
+                                    <div></div>
+                                </div>
+                                <div>
+                                    <div></div>
+                                </div>
+                                <div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                <pre id="screenList">Data will display here</pre>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <a href="https://www.flaticon.com/free-icons/canary" title="Canary icons">Canary icons created by Freepik - Flaticon</a>
+    </footer>
+    <div id="loading""></div>
+</body>
+</html>

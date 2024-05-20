@@ -1,5 +1,8 @@
-/src/client/token.json
-/src/client/client_secrets.json
-/db/*
+###
 .env
+
+
+### Node modules
 node_modules/*
+server/node_modules/*
+client/node_modules/*
