@@ -4,7 +4,7 @@
   "description": "This program updates Google Calendar through an API via an interface using markdown in Obsidian",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build" : "npm run build --prefix server",
+    "build": "npm run build --prefix server",
     "server": "nodemon server/dist/index.mjs",
     "client": "npm run dev --prefix client",
     "dev": "concurrently  \"npm run build\" \"npm run server\" \"npm run client\""
